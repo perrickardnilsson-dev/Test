@@ -6,6 +6,7 @@ med sjön Skärsjön ca 400 m nordväst (56.3102N, 14.9395O).
 
 ## Kommandon
 - `npm install` – installera beroenden
+- `npm run setup` – ladda ner PBR-texturer (CC0) från Poly Haven till `public/textures/`
 - `npm run dev` – utvecklingsserver (Vite)
 - `npm run build` – produktionsbygge till `dist/`
 - `npm run preview` – servera produktionsbygget lokalt
@@ -14,8 +15,14 @@ med sjön Skärsjön ca 400 m nordväst (56.3102N, 14.9395O).
 - **Etapp 1 klar**: prototypen (`prototype/traneras-garden.html`) är ombyggd till
   ett Vite-projekt med ES-moduler och three.js från npm. All spelmekanik och alla
   svenska texter är bevarade. Prototypen ligger kvar som facit för spellogiken.
-- `PROMPT.md` beskriver måluppdraget: realistisk grafik (PBR-texturer, GLTF-modeller,
-  vattenshader, Sky, post-processing). Nästa etapp är **etapp 2: terräng + texturer**.
+- **Etapp 2 klar**: terrängen är chunkad med LOD (48/16/6 segment per 50 m-chunk,
+  kjolar döljer springor) och har ett PBR-splatmaterial: gräs, skogsmark, berg och
+  grus blandas per fragment efter höjd/lutning/väg/sjö – samma regler som
+  prototypens vertexfärger. Årstider (höstton, snö) sätts via shader-uniforms.
+  Texturer hämtas från Poly Haven med `npm run setup`; saknas de genereras
+  procedurella reservtexturer i koden, så spelet fungerar utan nedladdning.
+- `PROMPT.md` beskriver måluppdraget. Nästa etapp är **etapp 3: modeller + skog**
+  (GLTF från Quaternius, InstancedMesh + LOD).
 
 ## Arkitektur (src/)
 Modulerna bildar en acyklisk importkedja, från grund till topp:
@@ -26,7 +33,9 @@ Modulerna bildar en acyklisk importkedja, från grund till topp:
 | `config.js` | Alla konstanter: värld, verktyg, priser, fröer, byggnader |
 | `state.js` | Speltillståndet `S`, årstidshjälpare, `give()` |
 | `scene.js` | Renderare, scen, kamera, ljus, stjärnor/måne/sol |
-| `terrain.js` | `heightAt()`, marken med årstidsfärger, Skärsjöns vatten, vass |
+| `terrain.js` | `heightAt()`, chunkad LOD-terräng (`updateTerrain`), Skärsjöns vatten, vass |
+| `terrain-material.js` | PBR-splatshader (gräs/skog/berg/grus) + årstids-uniforms |
+| `fallback-textures.js` | Procedurella reservtexturer när Poly Haven-filer saknas |
 | `vegetation.js` | Skogen (gran/tall/björk) och stenar som `InstancedMesh` |
 | `farm.js` | Gårdsbebyggelsen: bostadshus, vedbod, brygga + `box()`-hjälparen |
 | `player.js` | Spelarens rörelse, hopp, kamerastyrning, `keys` |
@@ -45,8 +54,9 @@ Modulerna bildar en acyklisk importkedja, från grund till topp:
 | `input.js` | Tangentbord, mus, pekarlås, verktygsval |
 | `main.js` | Spel-loopen, startskärmen, döden, stats.js i dev-läge |
 
-Obs: `scene.js` stänger av `THREE.ColorManagement` för att behålla prototypens
-utseende (byggd mot r128). Det tas bort i etapp 2+ när PBR-material införs.
+I dev-läge finns `window.__traneras` med debughandtag (S, newDay, setWeather,
+player m.m.) – praktiskt för att testa årstider och väder från konsolen och
+för automatiska webbläsartester.
 
 ## Arbetsregler
 - Jobba i etapperna som listas sist i PROMPT.md, en i taget. Testa i webbläsaren
@@ -61,7 +71,7 @@ utseende (byggd mot r128). Det tas bort i etapp 2+ när PBR-material införs.
 
 ## Etapper (från PROMPT.md)
 1. ✅ Projektuppsättning + flytta in prototypens logik i moduler
-2. ⬜ Terräng + texturer (PBR från Poly Haven, splatmap)
+2. ✅ Terräng + texturer (PBR från Poly Haven, splatmap, chunk/LOD)
 3. ⬜ Modeller + skog (GLTF från Quaternius, InstancedMesh + LOD)
 4. ⬜ Vatten + himmel + post-processing
 5. ⬜ Väder + årstider

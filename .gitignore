@@ -1,4 +1,5 @@
 node_modules/
 dist/
+public/textures/
 *.log
 .DS_Store

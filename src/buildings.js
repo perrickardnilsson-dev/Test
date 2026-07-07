@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { BUILDS } from './config.js';
 import { S } from './state.js';
 import { scene } from './scene.js';
-import { heightAt, ground } from './terrain.js';
+import { heightAt, groundMeshes } from './terrain.js';
 import { box } from './farm.js';
 import { makePlot } from './farming.js';
 import { player } from './player.js';
@@ -92,7 +92,7 @@ export function placeBuild() {
 
 export function updateGhost() {
   if (!buildMode || !ghost) return;
-  const hits = rayHit([ground], 16);
+  const hits = rayHit(groundMeshes, 16);
   if (hits.length) {
     const p = hits[0].point;
     ghost.visible = true;

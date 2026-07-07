@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { YARD, SEED2CROP } from './config.js';
 import { S, give, seasonIdx, seasonName } from './state.js';
 import { camera } from './scene.js';
-import { ground } from './terrain.js';
+import { groundMeshes } from './terrain.js';
 import { trees, killTree, rocks, killRock } from './vegetation.js';
 import { house } from './farm.js';
 import { plots, makePlot, plantSeed, nearestPlot, soilWetMat } from './farming.js';
@@ -46,7 +46,7 @@ export function toolAction() {
       }
     }
   } else if (t === 2) { // Jordhacka
-    const hits = rayHit([ground], 5);
+    const hits = rayHit(groundMeshes, 5);
     if (hits.length) {
       const p = hits[0].point;
       if (Math.hypot(p.x - YARD.x, p.z - YARD.z) > YARD.r) { msg('Marken är för hård – odla på gårdstomten.'); return; }

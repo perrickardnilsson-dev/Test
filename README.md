@@ -8,10 +8,14 @@ skogen, fiska i Skärsjön, bygg ut gården – och överlev vintern i Blekinge.
 
 ```bash
 npm install
+npm run setup    # hämta PBR-texturer (CC0) från Poly Haven – valfritt men rekommenderat
 npm run dev      # utvecklingsserver – öppna adressen som visas
 npm run build    # produktionsbygge till dist/
 npm run preview  # servera produktionsbygget lokalt
 ```
+
+Utan `npm run setup` används procedurellt genererade reservtexturer, så spelet
+fungerar även offline.
 
 ## Styrning
 

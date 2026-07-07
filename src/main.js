@@ -4,7 +4,7 @@ import { rand } from './utils.js';
 import { DAY_REAL } from './config.js';
 import { S } from './state.js';
 import { renderer, scene, camera } from './scene.js';
-import { heightAt, recolorGround } from './terrain.js';
+import { heightAt, recolorGround, updateTerrain } from './terrain.js';
 import { treeSeasonColors } from './vegetation.js';
 import './farm.js';
 import { updatePlants } from './farming.js';
@@ -31,6 +31,16 @@ if (import.meta.env.DEV) {
   stats.dom.style.right = '12px';
   stats.dom.style.top = '160px';
   document.body.appendChild(stats.dom);
+}
+
+// Debughandtag i dev-läge, t.ex. för att testa årstider från konsolen:
+//   __traneras.S.day = 13; __traneras.newDay();
+if (import.meta.env.DEV) {
+  const { water } = await import('./terrain.js');
+  const { setWeather } = await import('./weather.js');
+  const { toolAction, interact } = await import('./interactions.js');
+  const { plots } = await import('./farming.js');
+  window.__traneras = { S, newDay, recolorGround, treeSeasonColors, player, water, setWeather, toolAction, interact, plots };
 }
 
 function die() {
@@ -77,6 +87,7 @@ function loop() {
     updateSky(dt);
     updateHUD();
   }
+  updateTerrain(player.x, player.z);
   renderer.render(scene, camera);
   stats && stats.end();
 }

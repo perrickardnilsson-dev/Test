@@ -2,12 +2,7 @@
 import * as THREE from 'three';
 import { rand } from './utils.js';
 
-// Prototypen är byggd mot three r128 utan färghantering. Behåll dess utseende
-// tills PBR-uppgraderingen (etapp 2+), då detta tas bort.
-THREE.ColorManagement.enabled = false;
-
 export const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
