@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tranerås – Gården vid Skärsjön</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:100%; height:100%; overflow:hidden; background:#0a0f14; font-family:'Trebuchet MS',system-ui,sans-serif; }
+  canvas { display:block; }
+  .panel { background:rgba(24,19,13,.88); border:1px solid rgba(190,160,110,.4); border-radius:8px; color:#e8ddc8; }
+  #hud { position:fixed; top:12px; left:12px; padding:10px 14px; min-width:210px; pointer-events:none; }
+  #hud h1 { font-family:Georgia,serif; font-size:13px; letter-spacing:1px; color:#cfae72; font-weight:normal; margin-bottom:6px; }
+  .bar { height:10px; border-radius:5px; background:rgba(255,255,255,.12); margin:4px 0 8px; overflow:hidden; }
+  .bar>div { height:100%; border-radius:5px; transition:width .2s; }
+  #bhp>div{background:#c0453b} #bhu>div{background:#d99a3d} #ben>div{background:#5aa053}
+  .blabel { font-size:10px; color:#b8a888; text-transform:uppercase; letter-spacing:1px; }
+  #clockbox { position:fixed; top:12px; right:12px; padding:10px 16px; text-align:right; pointer-events:none; }
+  #clock { font-family:Georgia,serif; font-size:22px; color:#f0e6ce; }
+  #daytxt { font-size:12px; color:#b8a888; margin-top:2px; }
+  #weathertxt { font-size:12px; color:#9db4c0; margin-top:2px; }
+  #money { position:fixed; top:118px; right:12px; padding:8px 16px; font-size:16px; color:#e8d48a; pointer-events:none; }
+  #hotbar { position:fixed; bottom:14px; left:50%; transform:translateX(-50%); display:flex; gap:6px; }
+  .slot { width:52px; height:52px; background:rgba(24,19,13,.85); border:2px solid rgba(190,160,110,.35); border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#cbbfa5; cursor:pointer; }
+  .slot .ico { font-size:20px; } .slot .k { font-size:9px; color:#8f8266; }
+  .slot.sel { border-color:#e8c87a; background:rgba(70,55,30,.9); }
+  #crosshair { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); color:rgba(255,255,255,.75); font-size:18px; pointer-events:none; }
+  #prompt { position:fixed; bottom:90px; left:50%; transform:translateX(-50%); padding:6px 14px; font-size:14px; display:none; }
+  #msgs { position:fixed; bottom:150px; left:50%; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; gap:4px; pointer-events:none; }
+  .msg { padding:5px 14px; font-size:14px; background:rgba(24,19,13,.85); border-radius:14px; color:#f0e6ce; }
+  #napp { position:fixed; top:38%; left:50%; transform:translate(-50%,-50%); font-family:Georgia,serif; font-size:42px; color:#ffd75e; text-shadow:0 2px 8px #000; display:none; pointer-events:none; }
+  .bigpanel { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:min(560px,92vw); max-height:80vh; overflow-y:auto; padding:18px 22px; display:none; z-index:20; }
+  .bigpanel h2 { font-family:Georgia,serif; color:#cfae72; font-weight:normal; margin-bottom:10px; font-size:20px; }
+  .row { display:flex; justify-content:space-between; align-items:center; padding:6px 4px; border-bottom:1px solid rgba(190,160,110,.15); font-size:14px; }
+  .row button { background:#5a4526; color:#f0e6ce; border:1px solid rgba(190,160,110,.5); border-radius:5px; padding:4px 12px; cursor:pointer; font-size:13px; }
+  .row button:hover { background:#7a5f36; }
+  .row button:disabled { opacity:.35; cursor:default; }
+  .closehint { margin-top:10px; font-size:12px; color:#8f8266; }
+  #start { position:fixed; inset:0; background:linear-gradient(rgba(6,10,8,.82),rgba(6,10,8,.92)); z-index:50; display:flex; align-items:center; justify-content:center; }
+  #start .inner { max-width:600px; padding:34px; text-align:center; color:#e8ddc8; }
+  #start h1 { font-family:Georgia,serif; font-size:34px; color:#e8c87a; font-weight:normal; margin-bottom:4px; }
+  #start h3 { font-family:Georgia,serif; font-size:15px; color:#9db48f; font-weight:normal; margin-bottom:18px; font-style:italic; }
+  #start p { font-size:14px; line-height:1.55; margin-bottom:16px; color:#c9bfa6; }
+  #ctrl { text-align:left; display:inline-block; font-size:13px; line-height:1.8; color:#b8a888; margin-bottom:20px; }
+  #ctrl b { color:#e8d48a; display:inline-block; width:110px; }
+  #startbtn { background:#6a5330; color:#f5ead0; border:1px solid #cfae72; border-radius:8px; padding:12px 34px; font-size:17px; cursor:pointer; font-family:Georgia,serif; }
+  #startbtn:hover { background:#84693e; }
+</style>
+</head>
+<body>
+<div id="hud" class="panel">
+  <h1>TRANERÅSVÄGEN 201</h1>
+  <div class="blabel">Hälsa</div><div class="bar" id="bhp"><div style="width:100%"></div></div>
+  <div class="blabel">Hunger</div><div class="bar" id="bhu"><div style="width:100%"></div></div>
+  <div class="blabel">Energi</div><div class="bar" id="ben"><div style="width:100%"></div></div>
+</div>
+<div id="clockbox" class="panel"><div id="clock">07:00</div><div id="daytxt">Dag 1 · Vår</div><div id="weathertxt">Klart</div></div>
+<div id="money" class="panel">100 kr</div>
+<div id="hotbar"></div>
+<div id="crosshair">+</div>
+<div id="prompt" class="panel"></div>
+<div id="msgs"></div>
+<div id="napp">NAPP!</div>
+<div id="p-inv" class="bigpanel panel"><h2>Inventarie</h2><div id="invlist"></div><div class="closehint">Tab/Esc stänger</div></div>
+<div id="p-shop" class="bigpanel panel"><h2>Handlaren</h2><div id="shoplist"></div><div class="closehint">Esc stänger</div></div>
+<div id="p-build" class="bigpanel panel"><h2>Bygga</h2><div id="buildlist"></div><div class="closehint">Esc stänger · Klicka i världen för att placera</div></div>
+<div id="start"><div class="inner">
+  <h1>Tranerås</h1>
+  <h3>Gården vid Skärsjön · Blekinge</h3>
+  <p>Du har tagit över skogsfastigheten på Traneråsvägen 201 utanför Karlshamn. Mitt i granskogen ligger gården, och fyrahundra meter mot nordväst glittrar Skärsjön. Odla, jaga i skogen, fiska i sjön, bygg ut gården – och överlev vintern.</p>
+  <div id="ctrl">
+    <b>W A S D</b> Gå &nbsp;·&nbsp; <b>Shift</b> Spring &nbsp;·&nbsp; <b>Mellanslag</b> Hoppa<br>
+    <b>Mus</b> Se dig omkring &nbsp;·&nbsp; <b>Vänsterklick</b> Använd verktyg<br>
+    <b>1–7</b> Välj verktyg &nbsp;·&nbsp; <b>E</b> Interagera<br>
+    <b>Tab</b> Inventarie &nbsp;·&nbsp; <b>Q</b> Byt frö &nbsp;·&nbsp; <b>Esc</b> Paus
+  </div><br>
+  <button id="startbtn">Börja på gården</button>
+</div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ================= GRUND =================
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const rand=(a,b)=>a+Math.random()*(b-a);
+const sstep=t=>t*t*(3-2*t);
+function hash(x,y){const s=Math.sin(x*127.1+y*311.7)*43758.5453;return s-Math.floor(s);}
+function vnoise(x,y){const xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi,u=sstep(xf),v=sstep(yf);
+ return hash(xi,yi)*(1-u)*(1-v)+hash(xi+1,yi)*u*(1-v)+hash(xi,yi+1)*(1-u)*v+hash(xi+1,yi+1)*u*v;}
+
+const W=400,SEG=120;
+const LAKE={x:-90,z:-110,r:55};
+const WATER_Y=1.1;
+const YARD={x:0,z:0,r:24};
+const ROAD_Z=42,ROAD_W=7;
+const DAY_REAL=480; // sek per speldygn
+const SEASONS=['Vår','Sommar','Höst','Vinter'];
+const SEASON_DAYS=4;
+
+function heightAt(x,z){
+  let h=2.5+vnoise(x*0.012+13,z*0.012+7)*7+vnoise(x*0.05,z*0.05)*1.4;
+  const d=Math.hypot(x-LAKE.x,z-LAKE.z);
+  if(d<LAKE.r+30){const t=sstep(clamp((LAKE.r+30-d)/30,0,1));h=lerp(h,-1.6,t);}
+  const dy=Math.hypot(x-YARD.x,z-YARD.z);
+  if(dy<YARD.r+14){const t=sstep(clamp((YARD.r+14-dy)/14,0,1));h=lerp(h,3.0,t);}
+  const dz=Math.abs(z-ROAD_Z);
+  if(dz<ROAD_W+8){const t=sstep(clamp((ROAD_W+8-dz)/8,0,1));h=lerp(h,2.9,t);}
+  return h;
+}
+
+// ================= SPELTILLSTÅND =================
+const S={
+  money:100, day:1, time:7.0, hp:100, hunger:85, energy:100,
+  weather:'Klart', tool:0,
+  inv:{'potatisfrö':6,'morotsfrö':4,'pil':12,'trä':10},
+  selSeed:'potatisfrö', dead:false
+};
+const seasonIdx=()=>Math.floor((S.day-1)/SEASON_DAYS)%4;
+const seasonName=()=>SEASONS[seasonIdx()];
+const isWinter=()=>seasonIdx()===3;
+
+const TOOLS=[
+  {name:'Yxa',ico:'🪓'},{name:'Korp',ico:'⛏️'},{name:'Jordhacka',ico:'🌱'},
+  {name:'Vattenkanna',ico:'💧'},{name:'Pilbåge',ico:'🏹'},{name:'Fiskespö',ico:'🎣'},{name:'Hammare',ico:'🔨'}
+];
+const FOOD={'potatis':10,'morot':8,'ägg':12,'abborre':8,'gädda':10,'rökt fisk':22,'rökt kött':30};
+const SELL={'potatis':8,'morot':6,'korn':10,'ägg':5,'ull':25,'kött':30,'rökt kött':45,'abborre':12,'gädda':25,'rökt fisk':20,'skinn':20,'trä':2,'sten':3};
+const BUY=[
+  {item:'potatisfrö',price:4},{item:'morotsfrö',price:3},{item:'kornfrö',price:5},
+  {item:'pil',price:2},{item:'höna',price:60,live:1},{item:'får',price:140,live:1}
+];
+const SEED2CROP={'potatisfrö':{crop:'potatis',days:1.5,seasons:[0,1],col:0x3f7a35},
+  'morotsfrö':{crop:'morot',days:1.0,seasons:[0,1,2],col:0x4c8a3c},
+  'kornfrö':{crop:'korn',days:2.0,seasons:[1,2],col:0xb8a84c}};
+
+// ================= SCEN =================
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+const scene=new THREE.Scene();
+scene.fog=new THREE.Fog(0x9db4c0,50,240);
+const camera=new THREE.PerspectiveCamera(72,innerWidth/innerHeight,0.1,600);
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+
+const hemi=new THREE.HemisphereLight(0xbcd4e6,0x3a4a2e,0.55); scene.add(hemi);
+const sun=new THREE.DirectionalLight(0xfff2d8,1.0);
+sun.castShadow=true; sun.shadow.mapSize.set(2048,2048);
+const sc=sun.shadow.camera; sc.left=-70;sc.right=70;sc.top=70;sc.bottom=-70;sc.near=10;sc.far=400;
+scene.add(sun); scene.add(sun.target);
+
+// Stjärnor + måne
+const starGeo=new THREE.BufferGeometry();
+{const p=[];for(let i=0;i<600;i++){const a=rand(0,Math.PI*2),b=rand(0.05,Math.PI/2);p.push(Math.cos(a)*Math.cos(b)*420,Math.sin(b)*420,Math.sin(a)*Math.cos(b)*420);}
+ starGeo.setAttribute('position',new THREE.Float32BufferAttribute(p,3));}
+const starMat=new THREE.PointsMaterial({color:0xcdd8ff,size:1.4,transparent:true,opacity:0});
+const stars=new THREE.Points(starGeo,starMat); scene.add(stars);
+const moon=new THREE.Mesh(new THREE.SphereGeometry(9,12,12),new THREE.MeshBasicMaterial({color:0xdfe6f0,fog:false}));
+scene.add(moon);
+const sunBall=new THREE.Mesh(new THREE.SphereGeometry(12,12,12),new THREE.MeshBasicMaterial({color:0xffe9a8,fog:false}));
+scene.add(sunBall);
+
+// ================= TERRÄNG =================
+const groundGeo=new THREE.PlaneGeometry(W,W,SEG,SEG);
+groundGeo.rotateX(-Math.PI/2);
+const gpos=groundGeo.attributes.position;
+const nVerts=gpos.count;
+const baseColors=new Float32Array(nVerts*3);
+const cGrass1=new THREE.Color(0x4c7a3d),cGrass2=new THREE.Color(0x628c46),
+      cGravel=new THREE.Color(0x8a8377),cSand=new THREE.Color(0xcfc39a),
+      cMud=new THREE.Color(0x5c4d38),cYard=new THREE.Color(0x77914e),cRock=new THREE.Color(0x8b8d85);
+for(let i=0;i<nVerts;i++){
+  const x=gpos.getX(i),z=gpos.getZ(i);
+  const h=heightAt(x,z); gpos.setY(i,h);
+  let c;
+  const dLake=Math.hypot(x-LAKE.x,z-LAKE.z);
+  if(Math.abs(z-ROAD_Z)<ROAD_W/2) c=cGravel.clone();
+  else if(h<WATER_Y-0.6) c=cMud.clone();
+  else if(h<WATER_Y+0.5&&dLake<LAKE.r+35) c=cSand.clone();
+  else if(Math.hypot(x-YARD.x,z-YARD.z)<YARD.r*0.85) c=cYard.clone();
+  else if(h>9.5) c=cRock.clone().lerp(cGrass1,0.4);
+  else c=cGrass1.clone().lerp(cGrass2,vnoise(x*0.08,z*0.08));
+  c.offsetHSL(0,0,rand(-0.02,0.02));
+  baseColors[i*3]=c.r;baseColors[i*3+1]=c.g;baseColors[i*3+2]=c.b;
+}
+groundGeo.setAttribute('color',new THREE.BufferAttribute(baseColors.slice(),3));
+groundGeo.computeVertexNormals();
+const ground=new THREE.Mesh(groundGeo,new THREE.MeshLambertMaterial({vertexColors:true}));
+ground.receiveShadow=true; scene.add(ground);
+
+function recolorGround(){
+  const col=groundGeo.attributes.color, si=seasonIdx();
+  for(let i=0;i<nVerts;i++){
+    let r=baseColors[i*3],g=baseColors[i*3+1],b=baseColors[i*3+2];
+    const h=gpos.getY(i);
+    if(si===2){ // höst
+      r=lerp(r,0.62,0.22); g=lerp(g,0.5,0.18); b=lerp(b,0.22,0.2);
+    } else if(si===3&&h>WATER_Y+0.15){ // vinter – snö
+      r=lerp(r,0.93,0.85); g=lerp(g,0.94,0.85); b=lerp(b,0.97,0.85);
+    } else if(si===3){ r=lerp(r,0.8,0.3); g=lerp(g,0.82,0.3); b=lerp(b,0.88,0.3); }
+    col.setXYZ(i,r,g,b);
+  }
+  col.needsUpdate=true;
+}
+
+// Vatten – Skärsjön
+const waterMat=new THREE.MeshPhongMaterial({color:0x2e5d6e,transparent:true,opacity:0.82,shininess:90,specular:0x99bbcc});
+const water=new THREE.Mesh(new THREE.PlaneGeometry(220,220),waterMat);
+water.rotation.x=-Math.PI/2; water.position.set(LAKE.x,WATER_Y,LAKE.z);
+scene.add(water);
+// Vass runt sjön
+{const g=new THREE.CylinderGeometry(0.02,0.03,1.6,4), m=new THREE.MeshLambertMaterial({color:0x8a9a52});
+ const im=new THREE.InstancedMesh(g,m,260); const M=new THREE.Matrix4(),Q=new THREE.Quaternion(),V=new THREE.Vector3();
+ let n=0;
+ for(let i=0;i<800&&n<260;i++){const a=rand(0,Math.PI*2),rr=LAKE.r+rand(-6,3);
+   const x=LAKE.x+Math.cos(a)*rr,z=LAKE.z+Math.sin(a)*rr,h=heightAt(x,z);
+   if(h>WATER_Y-0.7&&h<WATER_Y+0.4){M.compose(V.set(x,h+0.7,z),Q.setFromEuler(new THREE.Euler(rand(-.1,.1),rand(0,6),rand(-.1,.1))),new THREE.Vector3(1,rand(.7,1.3),1));im.setMatrixAt(n++,M);}}
+ im.count=n; scene.add(im);}
+
+// ================= SKOG =================
+const trees={};
+const treeDefs={
+  gran:{count:150,trunkG:new THREE.CylinderGeometry(0.16,0.3,2.4,6),trunkC:0x5b4632,
+        folG:new THREE.ConeGeometry(1.7,5.6,7),folC:0x2f5230,folY:4.4,wood:9},
+  tall:{count:90,trunkG:new THREE.CylinderGeometry(0.2,0.3,5.6,6),trunkC:0x9a6a4a,
+        folG:new THREE.ConeGeometry(2.0,2.6,7),folC:0x3c6b3a,folY:6.6,wood:11},
+  bjork:{count:70,trunkG:new THREE.CylinderGeometry(0.13,0.18,4.6,6),trunkC:0xe8e4da,
+        folG:new THREE.IcosahedronGeometry(1.7,0),folC:0x67a34c,folY:4.9,wood:7}
+};
+const _M=new THREE.Matrix4(),_Q=new THREE.Quaternion(),_V=new THREE.Vector3(),_S=new THREE.Vector3(),_E=new THREE.Euler();
+function okTreeSpot(x,z){
+  const h=heightAt(x,z);
+  if(h<WATER_Y+0.6) return false;
+  if(Math.hypot(x-YARD.x,z-YARD.z)<YARD.r+3) return false;
+  if(Math.abs(z-ROAD_Z)<ROAD_W+2) return false;
+  if(vnoise(x*0.02+50,z*0.02+50)<0.3) return false; // gläntor
+  return true;
+}
+for(const key in treeDefs){
+  const d=treeDefs[key];
+  const trunk=new THREE.InstancedMesh(d.trunkG,new THREE.MeshLambertMaterial({color:d.trunkC}),d.count);
+  const fol=new THREE.InstancedMesh(d.folG,new THREE.MeshLambertMaterial({color:d.folC}),d.count);
+  trunk.castShadow=true; fol.castShadow=true;
+  trunk.userData={tree:key}; fol.userData={tree:key};
+  const data=[];
+  let n=0,tries=0;
+  while(n<d.count&&tries++<8000){
+    const x=rand(-W/2+8,W/2-8),z=rand(-W/2+8,W/2-8);
+    if(!okTreeSpot(x,z)) continue;
+    const h=heightAt(x,z),s=rand(0.8,1.35),ry=rand(0,Math.PI*2);
+    _M.compose(_V.set(x,h+1.1*s,z),_Q.setFromEuler(_E.set(0,ry,0)),_S.set(s,s,s));
+    trunk.setMatrixAt(n,_M);
+    _M.compose(_V.set(x,h+d.folY*s,z),_Q.setFromEuler(_E.set(0,ry,0)),_S.set(s,key==='bjork'?s*1.2:s,s));
+    fol.setMatrixAt(n,_M);
+    data.push({x,z,h,s,hp:key==='tall'?5:4,alive:true});
+    n++;
+  }
+  trunk.count=n; fol.count=n;
+  scene.add(trunk); scene.add(fol);
+  trees[key]={trunk,fol,data,def:d};
+}
+function killTree(key,i){
+  const t=trees[key]; t.data[i].alive=false;
+  _M.compose(_V.set(0,-50,0),_Q.identity(),_S.set(0.001,0.001,0.001));
+  t.trunk.setMatrixAt(i,_M); t.fol.setMatrixAt(i,_M);
+  t.trunk.instanceMatrix.needsUpdate=true; t.fol.instanceMatrix.needsUpdate=true;
+}
+function treeSeasonColors(){
+  const si=seasonIdx();
+  trees.bjork.fol.material.color.set(si===2?0xd8a832:si===3?0xbfb6a8:0x67a34c);
+  trees.bjork.fol.visible=(si!==3);
+  trees.gran.fol.material.color.set(si===3?0x5a7060:0x2f5230);
+  trees.tall.fol.material.color.set(si===3?0x5f7a58:0x3c6b3a);
+}
+
+// Stenar
+const rocks={data:[]};
+{const g=new THREE.DodecahedronGeometry(0.9,0),m=new THREE.MeshLambertMaterial({color:0x7d7f78});
+ const im=new THREE.InstancedMesh(g,m,70); im.castShadow=true; im.userData={rock:true};
+ let n=0,tries=0;
+ while(n<70&&tries++<4000){
+   const x=rand(-W/2+8,W/2-8),z=rand(-W/2+8,W/2-8),h=heightAt(x,z);
+   if(h<WATER_Y+0.4||Math.abs(z-ROAD_Z)<ROAD_W+1) continue;
+   if(Math.hypot(x-YARD.x,z-YARD.z)<10) continue;
+   const s=rand(0.5,1.6);
+   _M.compose(_V.set(x,h+0.3*s,z),_Q.setFromEuler(_E.set(rand(0,3),rand(0,3),rand(0,3))),_S.set(s,s*rand(.6,1),s));
+   im.setMatrixAt(n,_M);
+   rocks.data.push({x,z,hp:4,alive:true});
+   n++;
+ }
+ im.count=n; rocks.im=im; scene.add(im);}
+function killRock(i){rocks.data[i].alive=false;
+ _M.compose(_V.set(0,-50,0),_Q.identity(),_S.set(0.001,0.001,0.001));
+ rocks.im.setMatrixAt(i,_M); rocks.im.instanceMatrix.needsUpdate=true;}
+
+// ================= GÅRDEN =================
+const interactables=[]; // {mesh,type,pos,label}
+function box(w,h,d,c,x,y,z,parent,shadow=true){
+  const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshLambertMaterial({color:c}));
+  m.position.set(x,y,z); m.castShadow=shadow; m.receiveShadow=true; parent.add(m); return m;
+}
+// Bostadshuset – falurött med vita knutar
+const house=new THREE.Group();
+{const gy=heightAt(-6,-8);
+ house.position.set(-6,gy,-8);
+ box(8,3.4,6,0x7d2b2b,0,1.7,0,house);                    // stomme
+ box(0.4,3.4,6.1,0xe9e4d8,-4,1.7,0,house); box(0.4,3.4,6.1,0xe9e4d8,4,1.7,0,house); // knutar
+ const roof=new THREE.Mesh(new THREE.ConeGeometry(6.4,2.6,4),new THREE.MeshLambertMaterial({color:0x4a4440}));
+ roof.rotation.y=Math.PI/4; roof.scale.set(1.15,1,0.85); roof.position.y=4.7; roof.castShadow=true; house.add(roof);
+ const door=box(1.2,2.1,0.15,0x3f2f22,0,1.05,3.05,house);
+ box(1,1,0.1,0xbfd4e0,-2.4,2,3.03,house,false); box(1,1,0.1,0xbfd4e0,2.4,2,3.03,house,false); // fönster
+ const chim=box(0.7,1.6,0.7,0x8a8377,1.8,5.6,0,house);
+ door.userData.interact={type:'dörr',label:'Sov till morgonen [E]'};
+ interactables.push({mesh:door,type:'dörr'});
+ scene.add(house);}
+// Vedbod
+{const g=new THREE.Group(); const gy=heightAt(6,-14); g.position.set(6,gy,-14);
+ box(3.5,2.2,2.5,0x6b4a33,0,1.1,0,g);
+ const r=new THREE.Mesh(new THREE.BoxGeometry(4,0.2,3),new THREE.MeshLambertMaterial({color:0x4a4440}));
+ r.position.y=2.35; r.rotation.z=0.12; r.castShadow=true; g.add(r); scene.add(g);}
+
+// Bryggan vid Skärsjön
+{const dir=new THREE.Vector2(YARD.x-LAKE.x,YARD.z-LAKE.z).normalize();
+ let rr=LAKE.r+20; while(heightAt(LAKE.x+dir.x*rr,LAKE.z+dir.y*rr)>WATER_Y&&rr>10) rr-=1;
+ const sx=LAKE.x+dir.x*(rr+3),sz=LAKE.z+dir.y*(rr+3);
+ const dock=new THREE.Group(); dock.position.set(sx,WATER_Y+0.25,sz);
+ dock.rotation.y=Math.atan2(-dir.x,-dir.y);
+ box(1.6,0.15,9,0x8a6f4d,0,0,-4,dock);
+ for(let i=0;i<4;i++){box(0.18,1.6,0.18,0x6b543a,-0.7,-0.7,-1.5-i*2,dock);box(0.18,1.6,0.18,0x6b543a,0.7,-0.7,-1.5-i*2,dock);}
+ scene.add(dock);}
+
+// Handlarens bil
+const truck=new THREE.Group();
+{box(3.4,1.1,1.8,0x9a4030,0,1.0,0,truck);
+ box(1.5,1.0,1.7,0xb8b0a0,-0.8,2.0,0,truck);
+ box(1.6,0.9,1.6,0x6b5a40,0.8,1.9,0,truck);
+ const wg=new THREE.CylinderGeometry(0.42,0.42,0.3,10),wm=new THREE.MeshLambertMaterial({color:0x222});
+ [[-1.1,1],[1.1,1],[-1.1,-1],[1.1,-1]].forEach(p=>{const w=new THREE.Mesh(wg,wm);w.rotation.x=Math.PI/2;w.position.set(p[0],0.42,p[1]*0.95);truck.add(w);});
+ truck.position.set(26,heightAt(26,ROAD_Z)+0,ROAD_Z); truck.rotation.y=Math.PI/2;
+ truck.visible=false; scene.add(truck);}
+const trader={active:false};
+
+// ================= ODLING =================
+const plots=[]; // {x,z,mesh,plant,watered,greenhouse}
+const soilMat=new THREE.MeshLambertMaterial({color:0x4a3826});
+const soilWetMat=new THREE.MeshLambertMaterial({color:0x33271a});
+function makePlot(x,z,greenhouse=false){
+  const h=heightAt(x,z);
+  const m=new THREE.Mesh(new THREE.BoxGeometry(1.8,0.18,1.8),soilMat);
+  m.position.set(x,h+0.09,z); m.receiveShadow=true; scene.add(m);
+  const p={x,z,h,mesh:m,plant:null,watered:false,greenhouse};
+  plots.push(p); return p;
+}
+function plantSeed(p,seed){
+  const def=SEED2CROP[seed]; if(!def) return false;
+  const g=new THREE.Mesh(new THREE.ConeGeometry(0.28,0.6,5),new THREE.MeshLambertMaterial({color:def.col}));
+  g.position.set(p.x,p.h+0.2,p.z); g.castShadow=true; g.scale.set(0.3,0.3,0.3); scene.add(g);
+  p.plant={seed,crop:def.crop,days:def.days,growth:0,mesh:g,ripe:false};
+  return true;
+}
+function updatePlants(gameDt){ // gameDt i dygn
+  for(const p of plots){
+    if(!p.plant) continue;
+    const def=SEED2CROP[p.plant.seed];
+    if(!p.greenhouse&&!def.seasons.includes(seasonIdx())) continue; // växer ej fel årstid
+    const mult=p.watered?1.7:1;
+    p.plant.growth=Math.min(1,p.plant.growth+gameDt*mult/p.plant.days);
+    const s=0.3+p.plant.growth*0.9;
+    p.plant.mesh.scale.set(s,s,s);
+    if(p.plant.growth>=1&&!p.plant.ripe){p.plant.ripe=true;p.plant.mesh.material.color.offsetHSL(0.06,0.1,0.08);}
+  }
+}
+
+// ================= BYGGEN =================
+const BUILDS=[
+ {id:'staket',name:'Staket',cost:{'trä':2}},
+ {id:'honshus',name:'Hönshus',cost:{'trä':20}},
+ {id:'forrad',name:'Förråd',cost:{'trä':30,'sten':10}},
+ {id:'vaxthus',name:'Växthus',cost:{'trä':20,'sten':10}},
+ {id:'rokeri',name:'Rökeri',cost:{'sten':15,'trä':5}}
+];
+const builtThings=[];
+let buildMode=null, ghost=null;
+function costStr(c){return Object.entries(c).map(([k,v])=>v+' '+k).join(', ');}
+function canAfford(c){return Object.entries(c).every(([k,v])=>(S.inv[k]||0)>=v);}
+function payCost(c){for(const k in c){S.inv[k]-=c[k]; if(S.inv[k]<=0) delete S.inv[k];}}
+function makeBuilding(id,x,z,ry){
+  const h=heightAt(x,z), g=new THREE.Group(); g.position.set(x,h,z); g.rotation.y=ry;
+  if(id==='staket'){
+    box(2,0.12,0.12,0x8a6f4d,0,0.5,0,g); box(2,0.12,0.12,0x8a6f4d,0,0.95,0,g);
+    box(0.14,1.1,0.14,0x6b543a,-0.9,0.55,0,g); box(0.14,1.1,0.14,0x6b543a,0.9,0.55,0,g);
+  } else if(id==='honshus'){
+    box(2.6,1.6,2,0xa04a35,0,0.8,0,g); box(2.8,0.2,2.3,0x4a4440,0,1.75,0,g);
+    box(0.7,0.9,0.1,0x3f2f22,0,0.45,1.02,g);
+  } else if(id==='forrad'){
+    box(3.5,2.4,3,0x6b4a33,0,1.2,0,g); box(3.8,0.25,3.3,0x4a4440,0,2.5,0,g);
+  } else if(id==='vaxthus'){
+    const glass=new THREE.MeshLambertMaterial({color:0xbfe0d8,transparent:true,opacity:0.35});
+    const m=new THREE.Mesh(new THREE.BoxGeometry(5,2.4,4),glass); m.position.y=1.2; g.add(m);
+    box(5,0.15,0.15,0xd8d4c8,0,2.4,2,g); box(5,0.15,0.15,0xd8d4c8,0,2.4,-2,g);
+    makePlot(x-1.2,z-0.9,true); makePlot(x+1.2,z-0.9,true);
+    makePlot(x-1.2,z+0.9,true); makePlot(x+1.2,z+0.9,true);
+  } else if(id==='rokeri'){
+    box(1.4,2.2,1.4,0x7d7f78,0,1.1,0,g); box(0.5,0.8,0.5,0x5a5a55,0,2.5,0,g);
+    g.userData.rokeri=true;
+  }
+  g.traverse(o=>{o.userData.buildId=id;});
+  scene.add(g); builtThings.push({id,g,x,z});
+  return g;
+}
+
+// ================= DJUR =================
+const wild=[]; // rådjur & harar
+function makeDeer(){
+  const g=new THREE.Group();
+  box(1.3,0.7,0.55,0x8a6a48,0,1.0,0,g);
+  box(0.35,0.6,0.3,0x8a6a48,0.75,1.5,0,g);
+  box(0.3,0.32,0.28,0x94724e,0.95,1.95,0,g);
+  for(const p of [[-0.45,0.2],[0.45,0.2],[-0.45,-0.2],[0.45,-0.2]]) box(0.13,0.7,0.13,0x7a5c3e,p[0],0.35,p[1],g);
+  return g;
+}
+function makeHare(){
+  const g=new THREE.Group();
+  box(0.45,0.3,0.28,0x9a8a70,0,0.22,0,g);
+  box(0.2,0.2,0.2,0xa89878,0.28,0.4,0,g);
+  box(0.05,0.25,0.1,0xa89878,0.32,0.62,0,g);
+  return g;
+}
+function spawnWild(){
+  for(const a of wild) scene.remove(a.g);
+  wild.length=0;
+  for(let i=0;i<6;i++) addWild('rådjur');
+  for(let i=0;i<8;i++) addWild('hare');
+}
+function addWild(kind){
+  let x,z,t=0;
+  do{x=rand(-W/2+15,W/2-15);z=rand(-W/2+15,W/2-15);t++;}
+  while((heightAt(x,z)<WATER_Y+0.5||Math.hypot(x,z)<35)&&t<200);
+  const g=kind==='rådjur'?makeDeer():makeHare();
+  g.position.set(x,heightAt(x,z),z); g.traverse(o=>o.castShadow=true); scene.add(g);
+  wild.push({kind,g,hp:kind==='rådjur'?2:1,tx:x,tz:z,speed:kind==='rådjur'?1.6:1.9,flee:kind==='rådjur'?6:7,cool:0});
+}
+function updateWild(dt){
+  for(let i=wild.length-1;i>=0;i--){
+    const a=wild[i],p=a.g.position;
+    const dp=Math.hypot(p.x-player.x,p.z-player.z);
+    let sp=a.speed;
+    if(dp<14){ // fly från spelaren
+      const dx=p.x-player.x,dz=p.z-player.z,l=Math.hypot(dx,dz)||1;
+      a.tx=clamp(p.x+dx/l*30,-W/2+10,W/2-10); a.tz=clamp(p.z+dz/l*30,-W/2+10,W/2-10); sp=a.flee;
+    } else if(a.cool<=0){ a.tx=clamp(p.x+rand(-25,25),-W/2+10,W/2-10); a.tz=clamp(p.z+rand(-25,25),-W/2+10,W/2-10); a.cool=rand(4,9); }
+    a.cool-=dt;
+    const dx=a.tx-p.x,dz=a.tz-p.z,l=Math.hypot(dx,dz);
+    if(l>1){ p.x+=dx/l*sp*dt; p.z+=dz/l*sp*dt; a.g.rotation.y=Math.atan2(dx,dz)+Math.PI/2; }
+    const h=heightAt(p.x,p.z);
+    if(h<WATER_Y+0.3){a.tx=p.x-dx;a.tz=p.z-dz;}
+    p.y=Math.max(h,WATER_Y);
+  }
+}
+// Tamdjur
+const livestock=[]; // {kind,g,wool}
+function addLivestock(kind){
+  const g=new THREE.Group();
+  if(kind==='höna'){ box(0.35,0.3,0.28,0xd8cfc0,0,0.3,0,g); box(0.14,0.16,0.14,0xc04030,0.2,0.5,0,g); }
+  else { box(1.0,0.7,0.6,0xe4ded2,0,0.75,0,g); box(0.3,0.3,0.25,0x3a3530,0.6,1.0,0,g);
+         for(const p of [[-0.3,0.2],[0.3,0.2],[-0.3,-0.2],[0.3,-0.2]]) box(0.1,0.45,0.1,0x3a3530,p[0],0.22,p[1],g); }
+  const x=rand(4,14),z=rand(2,12);
+  g.position.set(x,heightAt(x,z),z); g.traverse(o=>o.castShadow=true); scene.add(g);
+  livestock.push({kind,g,wool:0,cool:rand(2,6)});
+}
+function updateLivestock(dt){
+  for(const a of livestock){
+    a.cool-=dt;
+    if(a.cool<=0){a.tx=clamp(a.g.position.x+rand(-5,5),2,18);a.tz=clamp(a.g.position.z+rand(-5,5),-2,16);a.cool=rand(3,8);}
+    if(a.tx!==undefined){const dx=a.tx-a.g.position.x,dz=a.tz-a.g.position.z,l=Math.hypot(dx,dz);
+      if(l>0.3){a.g.position.x+=dx/l*0.7*dt;a.g.position.z+=dz/l*0.7*dt;a.g.rotation.y=Math.atan2(dx,dz)+Math.PI/2;}}
+    a.g.position.y=heightAt(a.g.position.x,a.g.position.z);
+  }
+}
+
+// Pilar
+const arrows=[];
+function shootArrow(){
+  if((S.inv['pil']||0)<1){msg('Inga pilar! Köp av handlaren eller gör av trä (Tab).');return;}
+  if(S.energy<4){msg('För trött...');return;}
+  S.inv['pil']--; S.energy-=3;
+  const m=new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.02,0.7,4),new THREE.MeshLambertMaterial({color:0xd8c8a0}));
+  const dir=new THREE.Vector3(); camera.getWorldDirection(dir);
+  m.position.copy(camera.position).addScaledVector(dir,0.8);
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir);
+  scene.add(m);
+  arrows.push({m,vel:dir.multiplyScalar(38),life:4});
+}
+function updateArrows(dt){
+  for(let i=arrows.length-1;i>=0;i--){
+    const a=arrows[i];
+    a.vel.y-=14*dt;
+    a.m.position.addScaledVector(a.vel,dt);
+    a.m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),a.vel.clone().normalize());
+    a.life-=dt;
+    let hit=false;
+    for(let j=wild.length-1;j>=0;j--){
+      const w=wild[j],r=w.kind==='rådjur'?1.2:0.6;
+      if(a.m.position.distanceTo(w.g.position.clone().setY(w.g.position.y+0.8))<r){
+        w.hp--; hit=true;
+        if(w.hp<=0){
+          scene.remove(w.g); wild.splice(j,1);
+          if(w.kind==='rådjur'){give('kött',2);give('skinn',1);msg('Rådjur fällt! +2 kött, +1 skinn');}
+          else {give('kött',1);msg('Hare fälld! +1 kött');}
+        } else msg('Träff!');
+        break;
+      }
+    }
+    if(hit||a.life<=0||a.m.position.y<heightAt(a.m.position.x,a.m.position.z)){
+      scene.remove(a.m); arrows.splice(i,1);
+    }
+  }
+}
+
+// ================= SPELARE =================
+const player={x:2,z:8,y:0,velY:0,yaw:Math.PI,pitch:0,onGround:true};
+player.y=heightAt(player.x,player.z)+1.7;
+const keys={};
+let locked=false, uiOpen=null;
+const cv=renderer.domElement;
+cv.addEventListener('click',()=>{ if(!uiOpen&&!S.dead&&started) cv.requestPointerLock(); });
+document.addEventListener('pointerlockchange',()=>{locked=document.pointerLockElement===cv;});
+document.addEventListener('mousemove',e=>{
+  if(!locked) return;
+  player.yaw-=e.movementX*0.0023;
+  player.pitch=clamp(player.pitch-e.movementY*0.0023,-1.45,1.45);
+});
+addEventListener('keydown',e=>{
+  if(!started) return;
+  if(e.code==='Tab'){e.preventDefault(); togglePanel('p-inv'); return;}
+  if(e.code==='Escape'&&uiOpen){closePanels(); return;}
+  keys[e.code]=true;
+  if(e.code.startsWith('Digit')){const n=+e.code.slice(5); if(n>=1&&n<=7){S.tool=n-1; buildMode=null; removeGhost(); if(n===7) openBuild(); drawHotbar();}}
+  if(e.code==='KeyE') interact();
+  if(e.code==='KeyQ') cycleSeed();
+});
+addEventListener('keyup',e=>keys[e.code]=false);
+cv.addEventListener('mousedown',e=>{ if(locked&&e.button===0) toolAction(); });
+
+function updatePlayer(dt){
+  const sp=(keys['ShiftLeft']&&S.energy>5?7.2:4.0);
+  if(keys['ShiftLeft']&&(keys['KeyW']||keys['KeyA']||keys['KeyS']||keys['KeyD'])) S.energy=Math.max(0,S.energy-2.5*dt);
+  let mx=0,mz=0;
+  if(keys['KeyW'])mz-=1; if(keys['KeyS'])mz+=1; if(keys['KeyA'])mx-=1; if(keys['KeyD'])mx+=1;
+  const l=Math.hypot(mx,mz);
+  if(l>0){
+    mx/=l;mz/=l;
+    const sin=Math.sin(player.yaw),cos=Math.cos(player.yaw);
+    player.x+=(mx*cos + mz*sin)*sp*dt;
+    player.z+=(mz*cos - mx*sin)*sp*dt;
+  }
+  player.x=clamp(player.x,-W/2+3,W/2-3); player.z=clamp(player.z,-W/2+3,W/2-3);
+  let gy=heightAt(player.x,player.z);
+  const inLake=Math.hypot(player.x-LAKE.x,player.z-LAKE.z)<LAKE.r+15;
+  if(inLake&&gy<WATER_Y){
+    if(isWinter()) gy=WATER_Y+0.03;          // gå på isen
+    else gy=Math.max(gy,WATER_Y-1.1);        // vada
+  }
+  if(keys['Space']&&player.onGround){player.velY=5.4;player.onGround=false;S.energy=Math.max(0,S.energy-1.5);}
+  player.velY-=13*dt;
+  player.y+=player.velY*dt;
+  if(player.y<=gy+1.7){player.y=gy+1.7;player.velY=0;player.onGround=true;}
+  camera.position.set(player.x,player.y,player.z);
+  camera.rotation.set(0,0,0);
+  camera.rotateY(player.yaw); camera.rotateX(player.pitch);
+}
+
+// ================= INTERAKTION =================
+const raycaster=new THREE.Raycaster();
+const centerV2=new THREE.Vector2(0,0);
+function rayHit(objs,far=5){
+  raycaster.setFromCamera(centerV2,camera);
+  raycaster.far=far;
+  return raycaster.intersectObjects(objs,true);
+}
+function give(item,n){S.inv[item]=(S.inv[item]||0)+n;}
+function nearestPlot(){
+  let best=null,bd=2.6;
+  for(const p of plots){const d=Math.hypot(p.x-player.x,p.z-player.z);if(d<bd){bd=d;best=p;}}
+  return best;
+}
+let fishing=null; // {state,bobber,t,window}
+function toolAction(){
+  if(S.dead) return;
+  const t=S.tool;
+  if(buildMode){placeBuild();return;}
+  if(t===4){shootArrow();return;}
+  if(t===5){doFish();return;}
+  if(S.energy<3){msg('För trött – vila eller ät.');return;}
+  if(t===0){ // Yxa
+    const hits=rayHit([trees.gran.trunk,trees.gran.fol,trees.tall.trunk,trees.tall.fol,trees.bjork.trunk,trees.bjork.fol],4.5);
+    if(hits.length){
+      const key=hits[0].object.userData.tree,i=hits[0].instanceId,rec=trees[key].data[i];
+      if(rec&&rec.alive){rec.hp--;S.energy-=2;
+        if(rec.hp<=0){killTree(key,i);const w=Math.round(trees[key].def.wood*rec.s);give('trä',w);msg('Trädet föll! +'+w+' trä');}
+        else msg('Hugger... ('+rec.hp+')');
+      }
+    }
+  } else if(t===1){ // Korp
+    const hits=rayHit([rocks.im],4.5);
+    if(hits.length){
+      const i=hits[0].instanceId,rec=rocks.data[i];
+      if(rec&&rec.alive){rec.hp--;S.energy-=2.5;
+        if(rec.hp<=0){killRock(i);const q=4+Math.floor(Math.random()*3);give('sten',q);msg('Stenen krossad! +'+q+' sten');}
+        else msg('Bryter sten... ('+rec.hp+')');
+      }
+    }
+  } else if(t===2){ // Jordhacka
+    const hits=rayHit([ground],5);
+    if(hits.length){
+      const p=hits[0].point;
+      if(Math.hypot(p.x-YARD.x,p.z-YARD.z)>YARD.r){msg('Marken är för hård – odla på gårdstomten.');return;}
+      for(const pl of plots) if(Math.hypot(pl.x-p.x,pl.z-p.z)<1.9){msg('Redan uppgrävt här.');return;}
+      makePlot(Math.round(p.x/2)*2,Math.round(p.z/2)*2);
+      S.energy-=4; msg('Åkerruta uppgrävd. Tryck E för att så.');
+    }
+  } else if(t===3){ // Vattenkanna
+    const p=nearestPlot();
+    if(p){p.watered=true;p.mesh.material=soilWetMat;msg('Vattnat.');S.energy-=1;}
+  }
+}
+function doFish(){
+  const dLake=Math.hypot(player.x-LAKE.x,player.z-LAKE.z);
+  if(!fishing){
+    if(dLake>LAKE.r+8){msg('Gå till Skärsjön för att fiska.');return;}
+    const dir=new THREE.Vector3(); camera.getWorldDirection(dir);
+    const pt=camera.position.clone().addScaledVector(dir,8); pt.y=WATER_Y+0.05;
+    if(Math.hypot(pt.x-LAKE.x,pt.z-LAKE.z)>LAKE.r+4){msg('Sikta ut över vattnet.');return;}
+    const b=new THREE.Mesh(new THREE.SphereGeometry(0.12,8,8),new THREE.MeshLambertMaterial({color:0xc03828}));
+    b.position.copy(pt); scene.add(b);
+    fishing={state:'wait',bobber:b,t:rand(2.5,7),window:0};
+    msg(isWinter()?'Pilkar genom isen...':'Kastat. Vänta på napp...');
+  } else if(fishing.state==='bite'){
+    scene.remove(fishing.bobber);
+    const fisk=Math.random()<0.7?'abborre':'gädda';
+    give(fisk,1); msg('Fångst! +1 '+fisk);
+    fishing=null; document.getElementById('napp').style.display='none';
+  } else { scene.remove(fishing.bobber); fishing=null; msg('Drog upp reven.'); }
+}
+function updateFishing(dt){
+  if(!fishing) return;
+  if(fishing.state==='wait'){
+    fishing.bobber.position.y=WATER_Y+0.05+Math.sin(performance.now()*0.004)*0.04;
+    fishing.t-=dt;
+    if(fishing.t<=0){fishing.state='bite';fishing.window=1.0;document.getElementById('napp').style.display='block';fishing.bobber.position.y=WATER_Y-0.15;}
+  } else if(fishing.state==='bite'){
+    fishing.window-=dt;
+    if(fishing.window<=0){document.getElementById('napp').style.display='none';scene.remove(fishing.bobber);fishing=null;msg('Fisken slank iväg...');}
+  }
+  if(fishing&&Math.hypot(player.x-LAKE.x,player.z-LAKE.z)>LAKE.r+20){scene.remove(fishing.bobber);fishing=null;document.getElementById('napp').style.display='none';}
+}
+function interact(){
+  if(S.dead||uiOpen) return;
+  // Handlare
+  if(trader.active&&camera.position.distanceTo(truck.position)<6){openShop();return;}
+  // Dörr – sova
+  const dh=camera.position.distanceTo(new THREE.Vector3(house.position.x,house.position.y+1,house.position.z+3));
+  if(dh<3.5){
+    if(S.time>=20||S.time<5||S.energy<25) sleep();
+    else msg('Det är mitt på dagen – arbeta först.');
+    return;
+  }
+  // Rökeri
+  for(const b of builtThings) if(b.id==='rokeri'&&Math.hypot(b.x-player.x,b.z-player.z)<3.5){smoke();return;}
+  // Tamdjur – klipp får
+  for(const a of livestock){
+    if(a.kind==='får'&&a.wool>=1&&camera.position.distanceTo(a.g.position)<3){a.wool=0;give('ull',1);msg('Fåret klippt! +1 ull');return;}
+  }
+  // Åkerruta
+  const p=nearestPlot();
+  if(p){
+    if(p.plant&&p.plant.ripe){
+      const crop=p.plant.crop,n=2+(Math.random()<0.4?1:0);
+      give(crop,n); scene.remove(p.plant.mesh); p.plant=null;
+      msg('Skördat! +'+n+' '+crop); return;
+    }
+    if(!p.plant){
+      const seed=S.selSeed;
+      if(!(S.inv[seed]>0)){msg('Inga '+seed+'. Köp av handlaren. (Q byter frö)');return;}
+      const def=SEED2CROP[seed];
+      if(!p.greenhouse&&!def.seasons.includes(seasonIdx())){msg(def.crop+' kan inte sås på '+seasonName().toLowerCase()+'en.');return;}
+      S.inv[seed]--; if(S.inv[seed]<=0) delete S.inv[seed];
+      plantSeed(p,seed); msg('Sått '+def.crop+'. Vattna för snabbare växt!');
+      return;
+    }
+    msg('Växer... '+Math.round(p.plant.growth*100)+'%'+(p.watered?' (vattnat)':''));
+  }
+}
+function smoke(){
+  let n=0;
+  const conv=[['kött','rökt kött'],['abborre','rökt fisk'],['gädda','rökt fisk']];
+  for(const [a,b] of conv){ const q=S.inv[a]||0; if(q>0){give(b,q); delete S.inv[a]; n+=q;} }
+  msg(n>0?'Rökte '+n+' råvaror i rökeriet.':'Inget att röka – jaga eller fiska först.');
+}
+function cycleSeed(){
+  const seeds=Object.keys(SEED2CROP).filter(s=>S.inv[s]>0);
+  if(!seeds.length){msg('Du har inga fröer.');return;}
+  const i=seeds.indexOf(S.selSeed);
+  S.selSeed=seeds[(i+1)%seeds.length];
+  msg('Valt frö: '+S.selSeed);
+}
+function sleep(){
+  S.day++; S.time=6;
+  S.energy=100; S.hunger=Math.max(0,S.hunger-15);
+  newDay(); msg('En ny morgon på Tranerås. Dag '+S.day+' · '+seasonName());
+}
+
+// ================= UI =================
+const $=id=>document.getElementById(id);
+function msg(t){
+  const d=document.createElement('div'); d.className='msg'; d.textContent=t;
+  $('msgs').appendChild(d);
+  while($('msgs').children.length>3) $('msgs').removeChild($('msgs').firstChild);
+  setTimeout(()=>d.remove(),3500);
+}
+function drawHotbar(){
+  const hb=$('hotbar'); hb.innerHTML='';
+  TOOLS.forEach((t,i)=>{
+    const s=document.createElement('div'); s.className='slot'+(i===S.tool?' sel':'');
+    s.innerHTML='<div class="ico">'+t.ico+'</div><div class="k">'+(i+1)+' '+t.name+'</div>';
+    s.onclick=()=>{S.tool=i;buildMode=null;removeGhost();if(i===6)openBuild();drawHotbar();};
+    hb.appendChild(s);
+  });
+}
+function togglePanel(id){ if(uiOpen===id){closePanels();} else openPanelById(id); }
+function openPanelById(id){
+  closePanels(); uiOpen=id; $(id).style.display='block';
+  document.exitPointerLock&&document.exitPointerLock();
+  if(id==='p-inv') refreshInv();
+}
+function closePanels(){
+  ['p-inv','p-shop','p-build'].forEach(i=>$(i).style.display='none');
+  uiOpen=null;
+  if(started&&!S.dead) cv.requestPointerLock();
+}
+function refreshInv(){
+  const el=$('invlist'); el.innerHTML='';
+  const items=Object.keys(S.inv).sort();
+  if(!items.length){el.innerHTML='<div class="row">Tomt.</div>';}
+  for(const it of items){
+    const r=document.createElement('div'); r.className='row';
+    let btns='';
+    if(FOOD[it]) btns+='<button data-eat="'+it+'">Ät (+'+FOOD[it]+')</button> ';
+    if(it==='trä') btns+='<button data-craft="1">→ 3 pilar</button> ';
+    if(SEED2CROP[it]) btns+='<button data-seed="'+it+'">'+(S.selSeed===it?'✓ Valt frö':'Välj frö')+'</button>';
+    r.innerHTML='<span>'+it+' × '+S.inv[it]+'</span><span>'+btns+'</span>';
+    el.appendChild(r);
+  }
+  el.querySelectorAll('[data-eat]').forEach(b=>b.onclick=()=>{eat(b.dataset.eat);refreshInv();});
+  el.querySelectorAll('[data-craft]').forEach(b=>b.onclick=()=>{
+    if((S.inv['trä']||0)>=1){S.inv['trä']--;if(S.inv['trä']<=0)delete S.inv['trä'];give('pil',3);msg('+3 pilar');refreshInv();}
+  });
+  el.querySelectorAll('[data-seed]').forEach(b=>b.onclick=()=>{S.selSeed=b.dataset.seed;msg('Valt frö: '+S.selSeed);refreshInv();});
+}
+function eat(it){
+  if(!(S.inv[it]>0)) return;
+  S.inv[it]--; if(S.inv[it]<=0) delete S.inv[it];
+  S.hunger=Math.min(100,S.hunger+FOOD[it]);
+  S.energy=Math.min(100,S.energy+FOOD[it]*0.5);
+  msg('Åt '+it+'.');
+}
+function openShop(){
+  openPanelById('p-shop');
+  const el=$('shoplist'); el.innerHTML='<div class="row" style="color:#cfae72">— Köp —</div>';
+  BUY.forEach((b,i)=>{
+    const r=document.createElement('div'); r.className='row';
+    r.innerHTML='<span>'+b.item+' · '+b.price+' kr</span><button data-buy="'+i+'" '+(S.money<b.price?'disabled':'')+'>Köp</button>';
+    el.appendChild(r);
+  });
+  const sold=Object.keys(S.inv).filter(k=>SELL[k]&&S.inv[k]>0);
+  el.insertAdjacentHTML('beforeend','<div class="row" style="color:#cfae72">— Sälj —</div>');
+  if(!sold.length) el.insertAdjacentHTML('beforeend','<div class="row">Inget att sälja ännu.</div>');
+  for(const it of sold){
+    const r=document.createElement('div'); r.className='row';
+    r.innerHTML='<span>'+it+' × '+S.inv[it]+' · '+SELL[it]+' kr/st</span><span><button data-sell1="'+it+'">Sälj 1</button> <button data-sellall="'+it+'">Alla</button></span>';
+    el.appendChild(r);
+  }
+  el.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>{
+    const d=BUY[+b.dataset.buy];
+    if(S.money<d.price) return;
+    S.money-=d.price;
+    if(d.live) addLivestock(d.item); else give(d.item,d.item==='pil'?5:1);
+    msg('Köpte '+d.item+(d.item==='pil'?' ×5':''));
+    openShop();
+  });
+  el.querySelectorAll('[data-sell1]').forEach(b=>b.onclick=()=>{sellItem(b.dataset.sell1,1);openShop();});
+  el.querySelectorAll('[data-sellall]').forEach(b=>b.onclick=()=>{sellItem(b.dataset.sellall,S.inv[b.dataset.sellall]);openShop();});
+}
+function sellItem(it,n){
+  n=Math.min(n,S.inv[it]||0); if(n<=0) return;
+  S.inv[it]-=n; if(S.inv[it]<=0) delete S.inv[it];
+  S.money+=SELL[it]*n; msg('Sålde '+n+' '+it+' för '+SELL[it]*n+' kr');
+}
+function openBuild(){
+  openPanelById('p-build');
+  const el=$('buildlist'); el.innerHTML='';
+  BUILDS.forEach((b,i)=>{
+    const ok=canAfford(b.cost);
+    const r=document.createElement('div'); r.className='row';
+    r.innerHTML='<span>'+b.name+' <span style="color:#8f8266">('+costStr(b.cost)+')</span></span><button data-b="'+i+'" '+(ok?'':'disabled')+'>Välj</button>';
+    el.appendChild(r);
+  });
+  el.querySelectorAll('[data-b]').forEach(btn=>btn.onclick=()=>{
+    buildMode=BUILDS[+btn.dataset.b];
+    closePanels(); makeGhost();
+    msg(buildMode.name+': sikta på marken och klicka för att placera.');
+  });
+}
+function makeGhost(){
+  removeGhost();
+  ghost=new THREE.Mesh(new THREE.BoxGeometry(buildMode.id==='vaxthus'?5:buildMode.id==='staket'?2:3,1.5,buildMode.id==='vaxthus'?4:buildMode.id==='staket'?0.2:2.6),
+    new THREE.MeshLambertMaterial({color:0x7fd08a,transparent:true,opacity:0.4}));
+  scene.add(ghost);
+}
+function removeGhost(){ if(ghost){scene.remove(ghost);ghost=null;} }
+function placeBuild(){
+  if(!ghost||!ghost.visible) return;
+  if(!canAfford(buildMode.cost)){msg('Du saknar material: '+costStr(buildMode.cost));return;}
+  payCost(buildMode.cost);
+  const ry=Math.round(player.yaw/(Math.PI/2))*(Math.PI/2);
+  makeBuilding(buildMode.id,ghost.position.x,ghost.position.z,ry);
+  msg(buildMode.name+' byggt!');
+  if(buildMode.id!=='staket'){buildMode=null;removeGhost();S.tool=0;drawHotbar();}
+}
+function updateGhost(){
+  if(!buildMode||!ghost) return;
+  const hits=rayHit([ground],16);
+  if(hits.length){
+    const p=hits[0].point;
+    ghost.visible=true;
+    ghost.position.set(p.x,heightAt(p.x,p.z)+0.75,p.z);
+    ghost.rotation.y=Math.round(player.yaw/(Math.PI/2))*(Math.PI/2);
+  } else ghost.visible=false;
+}
+
+// ================= TID, HIMMEL, VÄDER =================
+const skyDay=new THREE.Color(0x8fb8d8),skyNight=new THREE.Color(0x0a0f1e),
+      skyDusk=new THREE.Color(0xd8875a),skyCloud=new THREE.Color(0x9aa3ab),
+      tmp=new THREE.Color();
+let precip=null;
+function setWeather(w){
+  S.weather=w;
+  if(precip){scene.remove(precip.pts);precip=null;}
+  if(w==='Regn'||w==='Snö'){
+    const n=900,pos=new Float32Array(n*3);
+    for(let i=0;i<n;i++){pos[i*3]=rand(-30,30);pos[i*3+1]=rand(0,25);pos[i*3+2]=rand(-30,30);}
+    const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(pos,3));
+    const m=new THREE.PointsMaterial({color:w==='Snö'?0xffffff:0x9ab4c8,size:w==='Snö'?0.22:0.1,transparent:true,opacity:0.8});
+    const pts=new THREE.Points(g,m); scene.add(pts);
+    precip={pts,speed:w==='Snö'?2.5:16};
+  }
+  $('weathertxt').textContent=w;
+}
+function rollWeather(){
+  const r=Math.random(),si=seasonIdx();
+  if(si===3) setWeather(r<0.4?'Snö':r<0.6?'Mulet':r<0.75?'Dimma':'Klart');
+  else if(si===2) setWeather(r<0.3?'Regn':r<0.55?'Mulet':r<0.7?'Dimma':'Klart');
+  else setWeather(r<0.18?'Regn':r<0.38?'Mulet':'Klart');
+}
+let nextWeatherT=2;
+function updateSky(){
+  const elev=Math.sin(Math.PI*(S.time-5.5)/15); // sol uppe ca 05:30–20:30
+  const day=clamp(elev*2.4,0,1);
+  const dusk=clamp(1-Math.abs(elev)*5,0,1)*(S.time>3&&S.time<23?1:0);
+  tmp.copy(skyNight).lerp(skyDay,day).lerp(skyDusk,dusk*0.55);
+  if(S.weather==='Mulet'||S.weather==='Regn'||S.weather==='Snö') tmp.lerp(skyCloud,0.6*day);
+  scene.background=tmp.clone();
+  scene.fog.color.copy(tmp);
+  const far=S.weather==='Dimma'?70:(S.weather==='Regn'||S.weather==='Snö')?130:240;
+  scene.fog.far=lerp(scene.fog.far,lerp(far*0.5,far,day*0.7+0.3),0.02);
+  scene.fog.near=scene.fog.far*0.18;
+  const az=Math.PI*(S.time-5.5)/15;
+  const sx=Math.cos(az)*150,sy=Math.sin(az)*150,sz=60;
+  sun.position.set(player.x+sx,Math.max(sy,-30),player.z+sz);
+  sun.target.position.set(player.x,0,player.z);
+  sun.intensity=clamp(elev,0,1)*((S.weather==='Klart')?1.15:0.55);
+  sun.color.setHSL(0.1,0.5,lerp(0.55,0.72,clamp(elev*3,0,1)));
+  hemi.intensity=lerp(0.08,0.55,day);
+  sunBall.position.set(player.x+sx*2.4,sy*2.4,player.z+sz*2.4);
+  sunBall.visible=elev>0&&S.weather==='Klart';
+  moon.position.set(player.x-sx*2.2,Math.max(-sy*2.2,20),player.z-sz*1.5);
+  moon.visible=elev<0.05;
+  starMat.opacity=clamp(-elev*3,0,1)*0.9;
+  if(precip){
+    const pos=precip.pts.geometry.attributes.position;
+    for(let i=0;i<pos.count;i++){
+      let y=pos.getY(i)-precip.speed*lastDt;
+      if(y<0)y=25;
+      pos.setY(i,y);
+    }
+    pos.needsUpdate=true;
+    precip.pts.position.set(player.x,player.y-1.7,player.z);
+  }
+}
+function newDay(){
+  rollWeather();
+  // vattnat nollställs
+  for(const p of plots){p.watered=false;p.mesh.material=soilMat;}
+  // vinter dödar grödor utomhus
+  if(isWinter()){
+    let died=0;
+    for(const p of plots) if(p.plant&&!p.greenhouse){scene.remove(p.plant.mesh);p.plant=null;died++;}
+    if(died) msg('Frosten tog '+died+' grödor! Bygg växthus.');
+  }
+  // djurproduktion
+  const hens=livestock.filter(a=>a.kind==='höna').length;
+  if(hens>0){
+    const feed=Math.min(hens,S.inv['korn']||0);
+    if(feed>0){S.inv['korn']-=feed;if(S.inv['korn']<=0)delete S.inv['korn'];give('ägg',feed);msg('Hönsen värpte '+feed+' ägg.');}
+    else msg('Hönsen är hungriga – de behöver korn för att värpa.');
+  }
+  for(const a of livestock) if(a.kind==='får') a.wool=Math.min(1,a.wool+0.34);
+  // årstidsbyte
+  if((S.day-1)%SEASON_DAYS===0&&S.day>1){
+    recolorGround(); treeSeasonColors();
+    waterMat.color.set(isWinter()?0xc8d8e0:0x2e5d6e);
+    waterMat.opacity=isWinter()?0.95:0.82;
+    msg('Ny årstid: '+seasonName()+(isWinter()?' – sjön fryser, isfiske möjligt!':''));
+  }
+  // handlare var tredje dag
+  trader.active=(S.day%3===1);
+  truck.visible=false;
+  if(trader.active) msg('Handlaren kommer till Traneråsvägen i dag (09–17).');
+  // vilt fylls på
+  if(wild.length<8) addWild(Math.random()<0.5?'rådjur':'hare');
+}
+
+// ================= HUD & LOOP =================
+function updateHUD(){
+  $('bhp').firstElementChild.style.width=S.hp+'%';
+  $('bhu').firstElementChild.style.width=S.hunger+'%';
+  $('ben').firstElementChild.style.width=S.energy+'%';
+  const h=Math.floor(S.time),m=Math.floor((S.time-h)*60);
+  $('clock').textContent=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+  $('daytxt').textContent='Dag '+S.day+' · '+seasonName();
+  $('money').textContent=S.money+' kr';
+  // prompt
+  let pr='';
+  if(trader.active&&truck.visible&&camera.position.distanceTo(truck.position)<6) pr='[E] Handla';
+  else {
+    const dh=camera.position.distanceTo(new THREE.Vector3(house.position.x,house.position.y+1,house.position.z+3));
+    if(dh<3.5) pr='[E] Sov (kväll/natt)';
+    else { const p=nearestPlot();
+      if(p&&p.plant&&p.plant.ripe) pr='[E] Skörda '+p.plant.crop;
+      else if(p&&!p.plant) pr='[E] Så '+ (SEED2CROP[S.selSeed]?SEED2CROP[S.selSeed].crop:'') +' (Q byter)';
+      for(const b of builtThings) if(b.id==='rokeri'&&Math.hypot(b.x-player.x,b.z-player.z)<3.5) pr='[E] Rök kött & fisk';
+      for(const a of livestock) if(a.kind==='får'&&a.wool>=1&&camera.position.distanceTo(a.g.position)<3) pr='[E] Klipp fåret';
+    }
+  }
+  $('prompt').style.display=pr?'block':'none';
+  $('prompt').textContent=pr;
+}
+function die(){
+  S.dead=true; document.exitPointerLock&&document.exitPointerLock();
+  msg('Du svimmade av svält... Du vaknar hemma. Halva kassan borta.');
+  setTimeout(()=>{
+    S.money=Math.floor(S.money/2); S.hp=60; S.hunger=50; S.energy=60;
+    player.x=2; player.z=8; player.y=heightAt(2,8)+1.7; S.dead=false;
+    if(started) cv.requestPointerLock();
+  },1800);
+}
+let started=false,lastDt=0.016;
+const clock=new THREE.Clock();
+function loop(){
+  requestAnimationFrame(loop);
+  const dt=Math.min(clock.getDelta(),0.05); lastDt=dt;
+  if(started&&!S.dead){
+    // tid
+    S.time+=dt*24/DAY_REAL;
+    if(S.time>=24){S.time-=24;S.day++;newDay();}
+    nextWeatherT-=dt*24/DAY_REAL;
+    if(nextWeatherT<=0){rollWeather();nextWeatherT=rand(3,7);}
+    // handlarbil synlig 09–17
+    truck.visible=trader.active&&S.time>=9&&S.time<=17;
+    // behov
+    S.hunger=Math.max(0,S.hunger-0.075*dt);
+    if(!keys['ShiftLeft']) S.energy=Math.min(100,S.energy+1.1*dt);
+    if(S.hunger<=0) S.hp=Math.max(0,S.hp-0.8*dt);
+    else if(S.hunger>65) S.hp=Math.min(100,S.hp+0.6*dt);
+    if(S.hp<=0){die();}
+    updatePlayer(dt);
+    updateWild(dt);
+    updateLivestock(dt);
+    updateArrows(dt);
+    updateFishing(dt);
+    updatePlants(dt/DAY_REAL*1); // dt sek → andel av dygn: dt/DAY_REAL
+    updateGhost();
+    updateSky();
+    updateHUD();
+  }
+  renderer.render(scene,camera);
+}
+$('startbtn').onclick=()=>{
+  $('start').style.display='none';
+  started=true;
+  drawHotbar(); recolorGround(); treeSeasonColors(); spawnWild(); rollWeather(); newDay();
+  S.day=1; trader.active=true; // handlaren är där dag 1
+  msg('Välkommen till Tranerås! Hugg träd, gräv åkrar och överlev.');
+  cv.requestPointerLock();
+};
+loop();
+</script>
+</body>
+</html>

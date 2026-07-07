@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tranerås – Gården vid Skärsjön</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌲</text></svg>">
+<link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+<div id="hud" class="panel">
+  <h1>TRANERÅSVÄGEN 201</h1>
+  <div class="blabel">Hälsa</div><div class="bar" id="bhp"><div style="width:100%"></div></div>
+  <div class="blabel">Hunger</div><div class="bar" id="bhu"><div style="width:100%"></div></div>
+  <div class="blabel">Energi</div><div class="bar" id="ben"><div style="width:100%"></div></div>
+</div>
+<div id="clockbox" class="panel"><div id="clock">07:00</div><div id="daytxt">Dag 1 · Vår</div><div id="weathertxt">Klart</div></div>
+<div id="money" class="panel">100 kr</div>
+<div id="hotbar"></div>
+<div id="crosshair">+</div>
+<div id="prompt" class="panel"></div>
+<div id="msgs"></div>
+<div id="napp">NAPP!</div>
+<div id="p-inv" class="bigpanel panel"><h2>Inventarie</h2><div id="invlist"></div><div class="closehint">Tab/Esc stänger</div></div>
+<div id="p-shop" class="bigpanel panel"><h2>Handlaren</h2><div id="shoplist"></div><div class="closehint">Esc stänger</div></div>
+<div id="p-build" class="bigpanel panel"><h2>Bygga</h2><div id="buildlist"></div><div class="closehint">Esc stänger · Klicka i världen för att placera</div></div>
+<div id="start"><div class="inner">
+  <h1>Tranerås</h1>
+  <h3>Gården vid Skärsjön · Blekinge</h3>
+  <p>Du har tagit över skogsfastigheten på Traneråsvägen 201 utanför Karlshamn. Mitt i granskogen ligger gården, och fyrahundra meter mot nordväst glittrar Skärsjön. Odla, jaga i skogen, fiska i sjön, bygg ut gården – och överlev vintern.</p>
+  <div id="ctrl">
+    <b>W A S D</b> Gå &nbsp;·&nbsp; <b>Shift</b> Spring &nbsp;·&nbsp; <b>Mellanslag</b> Hoppa<br>
+    <b>Mus</b> Se dig omkring &nbsp;·&nbsp; <b>Vänsterklick</b> Använd verktyg<br>
+    <b>1–7</b> Välj verktyg &nbsp;·&nbsp; <b>E</b> Interagera<br>
+    <b>Tab</b> Inventarie &nbsp;·&nbsp; <b>Q</b> Byt frö &nbsp;·&nbsp; <b>Esc</b> Paus
+  </div><br>
+  <button id="startbtn">Börja på gården</button>
+</div></div>
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
