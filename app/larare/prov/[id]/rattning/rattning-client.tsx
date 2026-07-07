@@ -1,0 +1,358 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Loader2, Send, Sparkles } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/components/ui/use-toast";
+import { LevelBadge } from "@/components/subject-badge";
+import { gradeLevelFromShare, questionTypeLabel } from "@/lib/constants";
+import { svarToText } from "@/lib/grading";
+import type {
+  Answer,
+  Attempt,
+  Grading,
+  Profile,
+  StudentAnswer,
+} from "@/lib/types";
+import type { EQWithBank } from "./page";
+import { GradingRow } from "./grading-row";
+
+type AttemptWithProfile = Attempt & {
+  profiles: Pick<Profile, "id" | "name" | "email">;
+};
+
+export function RattningClient({
+  examId,
+  examStatus,
+  examQuestions,
+  attempts,
+  answers,
+  gradings,
+}: {
+  examId: string;
+  examStatus: string;
+  examQuestions: EQWithBank[];
+  attempts: AttemptWithProfile[];
+  answers: Answer[];
+  gradings: Grading[];
+}) {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [gradingRunning, setGradingRunning] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+
+  const answerByKey = useMemo(() => {
+    const m = new Map<string, Answer>();
+    answers.forEach((a) => m.set(`${a.attempt_id}:${a.exam_question_id}`, a));
+    return m;
+  }, [answers]);
+
+  const gradingByAnswer = useMemo(() => {
+    const m = new Map<string, Grading>();
+    gradings.forEach((g) => m.set(g.answer_id, g));
+    return m;
+  }, [gradings]);
+
+  const totalMax = examQuestions.reduce((s, eq) => s + eq.poang, 0);
+
+  function pointsFor(attemptId: string, eq: EQWithBank): number {
+    const ans = answerByKey.get(`${attemptId}:${eq.id}`);
+    if (!ans) return 0;
+    const g = gradingByAnswer.get(ans.id);
+    if (!g) return 0;
+    return g.larare_poang ?? g.auto_poang ?? 0;
+  }
+
+  const hasAnyGrading = gradings.length > 0;
+  const pendingCount = gradings.filter((g) => g.status === "vantar").length;
+
+  async function runAiGrading() {
+    setGradingRunning(true);
+    try {
+      const res = await fetch(`/api/larare/prov/${examId}/ratta`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast({
+          variant: "destructive",
+          title: "Rättning misslyckades",
+          description: data.error,
+        });
+      } else {
+        toast({
+          variant: "success",
+          title: "Rättning klar",
+          description: `${data.graded} svar rättade${
+            data.aiErrors ? `, ${data.aiErrors} AI-fel` : ""
+          }.`,
+        });
+      }
+    } finally {
+      setGradingRunning(false);
+      router.refresh();
+    }
+  }
+
+  async function onPublish() {
+    setPublishing(true);
+    const { publishResults } = await import("../../actions");
+    const result = await publishResults(examId);
+    setPublishing(false);
+    if (result.error) {
+      toast({ variant: "destructive", title: "Fel", description: result.error });
+      return;
+    }
+    toast({
+      variant: "success",
+      title: "Resultat publicerat",
+      description: "Eleverna kan nu se sina resultat och motiveringar.",
+    });
+    router.refresh();
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-white p-4">
+        <div className="text-sm">
+          {hasAnyGrading ? (
+            <span>
+              {pendingCount > 0 ? (
+                <Badge variant="warning" className="mr-2">
+                  {pendingCount} väntar på granskning
+                </Badge>
+              ) : (
+                <Badge variant="success" className="mr-2">
+                  Alla granskade
+                </Badge>
+              )}
+              {examStatus === "rattat" && (
+                <Badge variant="success">Publicerat</Badge>
+              )}
+            </span>
+          ) : (
+            <span className="text-muted-foreground">
+              Kör AI-rättningen för att komma igång. Flerval rättas automatiskt.
+            </span>
+          )}
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={runAiGrading}
+            disabled={gradingRunning}
+          >
+            {gradingRunning ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" /> Rättar…
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4" /> Rätta med AI
+              </>
+            )}
+          </Button>
+          <Button
+            onClick={onPublish}
+            disabled={publishing || !hasAnyGrading}
+          >
+            <Send className="h-4 w-4" />
+            {examStatus === "rattat" ? "Uppdatera resultat" : "Publicera resultat"}
+          </Button>
+        </div>
+      </div>
+
+      <Tabs defaultValue="rattning">
+        <TabsList>
+          <TabsTrigger value="rattning">Rättning per elev</TabsTrigger>
+          <TabsTrigger value="resultat">Resultatöversikt</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="rattning" className="space-y-6 pt-4">
+          {attempts.map((attempt) => {
+            const score = examQuestions.reduce(
+              (s, eq) => s + pointsFor(attempt.id, eq),
+              0,
+            );
+            return (
+              <Card key={attempt.id}>
+                <CardHeader className="flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>{attempt.profiles.name}</CardTitle>
+                    <CardDescription>{attempt.profiles.email}</CardDescription>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-lg font-bold">
+                      {score} / {totalMax} p
+                    </div>
+                    <LevelBadge
+                      level={
+                        gradeLevelFromShare(
+                          totalMax ? score / totalMax : 0,
+                        ) as "E" | "C" | "A"
+                      }
+                    />
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {examQuestions.map((eq) => {
+                    const ans = answerByKey.get(`${attempt.id}:${eq.id}`);
+                    const grading = ans
+                      ? gradingByAnswer.get(ans.id)
+                      : undefined;
+                    const isAuto =
+                      eq.question_bank.fragetyp === "flerval_ett" ||
+                      eq.question_bank.fragetyp === "flerval_flera";
+                    return (
+                      <GradingRow
+                        key={eq.id}
+                        examId={examId}
+                        ordning={eq.ordning}
+                        maxPoang={eq.poang}
+                        isAuto={isAuto}
+                        fragetext={eq.question_bank.fragetext}
+                        fragetyp={eq.question_bank.fragetyp}
+                        alternativ={eq.question_bank.alternativ}
+                        facit={eq.question_bank.facit}
+                        bedomningsanvisning={
+                          eq.question_bank.bedomningsanvisning
+                        }
+                        studentText={svarToText(
+                          ans?.svar as StudentAnswer | undefined,
+                          eq.question_bank.alternativ,
+                        )}
+                        grading={grading}
+                      />
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </TabsContent>
+
+        <TabsContent value="resultat" className="pt-4">
+          <ResultatOversikt
+            examQuestions={examQuestions}
+            attempts={attempts}
+            pointsFor={pointsFor}
+            totalMax={totalMax}
+          />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+function ResultatOversikt({
+  examQuestions,
+  attempts,
+  pointsFor,
+  totalMax,
+}: {
+  examQuestions: EQWithBank[];
+  attempts: AttemptWithProfile[];
+  pointsFor: (attemptId: string, eq: EQWithBank) => number;
+  totalMax: number;
+}) {
+  const perStudent = attempts.map((a) => {
+    const score = examQuestions.reduce((s, eq) => s + pointsFor(a.id, eq), 0);
+    return { attempt: a, score };
+  });
+  const avg =
+    perStudent.length > 0
+      ? perStudent.reduce((s, p) => s + p.score, 0) / perStudent.length
+      : 0;
+
+  const perQuestion = examQuestions.map((eq) => {
+    const total = attempts.reduce((s, a) => s + pointsFor(a.id, eq), 0);
+    const maxTotal = eq.poang * Math.max(1, attempts.length);
+    const share = maxTotal ? total / maxTotal : 0;
+    return { eq, share };
+  });
+  const hardest = [...perQuestion].sort((a, b) => a.share - b.share);
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-2">
+      <Card>
+        <CardHeader>
+          <CardTitle>Per elev</CardTitle>
+          <CardDescription>
+            Snitt: {avg.toFixed(1)} / {totalMax} p
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {perStudent
+            .sort((a, b) => b.score - a.score)
+            .map(({ attempt, score }) => {
+              const share = totalMax ? score / totalMax : 0;
+              return (
+                <div
+                  key={attempt.id}
+                  className="flex items-center justify-between rounded-lg border p-3 text-sm"
+                >
+                  <span className="font-medium">{attempt.profiles.name}</span>
+                  <div className="flex items-center gap-2">
+                    <span>
+                      {score} / {totalMax} p
+                    </span>
+                    <LevelBadge
+                      level={gradeLevelFromShare(share) as "E" | "C" | "A"}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Svåraste frågorna</CardTitle>
+          <CardDescription>
+            Andel av maxpoäng klassen fick per fråga
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {hardest.map(({ eq, share }) => (
+            <div key={eq.id} className="space-y-1">
+              <div className="flex items-center justify-between text-sm">
+                <span className="truncate flex-1">
+                  {eq.ordning}. {eq.question_bank.fragetext}
+                </span>
+                <span className="ml-2 shrink-0 text-muted-foreground">
+                  {Math.round(share * 100)}%
+                </span>
+              </div>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className={
+                    share < 0.5
+                      ? "h-full bg-red-400"
+                      : share < 0.75
+                        ? "h-full bg-amber-400"
+                        : "h-full bg-emerald-400"
+                  }
+                  style={{ width: `${Math.round(share * 100)}%` }}
+                />
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {questionTypeLabel(eq.question_bank.fragetyp)}
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

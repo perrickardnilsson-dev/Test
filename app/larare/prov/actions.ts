@@ -116,6 +116,46 @@ export async function deleteExam(examId: string) {
   return { success: true };
 }
 
+export async function updateGrading(
+  examId: string,
+  gradingId: string,
+  input: {
+    larare_poang: number;
+    larare_kommentar: string | null;
+    status: "vantar" | "godkand";
+  },
+) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("gradings")
+    .update({
+      larare_poang: input.larare_poang,
+      larare_kommentar: input.larare_kommentar,
+      status: input.status,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", gradingId);
+  if (error) return { error: error.message };
+  revalidatePath(`/larare/prov/${examId}/rattning`);
+  return { success: true };
+}
+
+export async function publishResults(examId: string) {
+  const supabase = await createClient();
+
+  // Godkänn eventuella kvarvarande rättningar (t.ex. flerval) automatiskt
+  // genom att sätta provet till "rättat".
+  const { error } = await supabase
+    .from("exams")
+    .update({ status: "rattat" })
+    .eq("id", examId);
+  if (error) return { error: error.message };
+  revalidatePath(`/larare/prov/${examId}`);
+  revalidatePath(`/larare/prov/${examId}/rattning`);
+  revalidatePath("/larare/prov");
+  return { success: true };
+}
+
 async function renumber(examId: string) {
   const supabase = await createClient();
   const { data } = await supabase
