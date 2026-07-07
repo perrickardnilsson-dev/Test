@@ -35,13 +35,35 @@ export async function generateStructured<T>(opts: {
   schema: z.ZodType<T>;
   maxTokens?: number;
   retries?: number;
+  /** Bifogad PDF (base64) som Claude tolkar direkt. */
+  pdfBase64?: string;
 }): Promise<T> {
-  const { system, prompt, schema, maxTokens = 4096, retries = 2 } = opts;
+  const {
+    system,
+    prompt,
+    schema,
+    maxTokens = 4096,
+    retries = 2,
+    pdfBase64,
+  } = opts;
   const anthropic = getAnthropic();
 
   let lastError = "";
+  const firstContent: Anthropic.ContentBlockParam[] = [
+    { type: "text", text: prompt },
+  ];
+  if (pdfBase64) {
+    firstContent.unshift({
+      type: "document",
+      source: {
+        type: "base64",
+        media_type: "application/pdf",
+        data: pdfBase64,
+      },
+    });
+  }
   const messages: Anthropic.MessageParam[] = [
-    { role: "user", content: prompt },
+    { role: "user", content: firstContent },
   ];
 
   for (let attempt = 0; attempt <= retries; attempt++) {

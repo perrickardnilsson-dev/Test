@@ -17,16 +17,22 @@ import {
 } from "@/lib/ai/schemas";
 import type { Level, QuestionType, Subject } from "@/lib/types";
 
-export async function extractQuestionsFromText(opts: {
+export async function extractQuestionsFromPdf(opts: {
   amne: Subject;
   year: number | null;
-  pdfText: string;
+  pdfBase64: string;
 }): Promise<ExtractionResult> {
   return generateStructured({
     system: EXTRACTION_SYSTEM,
-    prompt: extractionPrompt(opts),
+    prompt: extractionPrompt({
+      amne: opts.amne,
+      year: opts.year,
+      pdfText:
+        "Provet bifogas som PDF-dokument. Läs hela dokumentet noggrant.",
+    }),
     schema: extractionResultSchema,
     maxTokens: 8192,
+    pdfBase64: opts.pdfBase64,
   });
 }
 
