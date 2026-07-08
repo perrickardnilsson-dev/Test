@@ -15,7 +15,8 @@ npm run preview  # servera produktionsbygget lokalt
 ```
 
 Utan `npm run setup` används procedurellt genererade reservtexturer, så spelet
-fungerar även offline.
+fungerar även offline. Vill du ha finare 3D-modeller (Quaternius, CC0) kör du
+`npm run setup:models` och följer instruktionerna.
 
 ## Styrning
 

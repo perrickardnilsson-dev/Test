@@ -7,6 +7,7 @@ med sjön Skärsjön ca 400 m nordväst (56.3102N, 14.9395O).
 ## Kommandon
 - `npm install` – installera beroenden
 - `npm run setup` – ladda ner PBR-texturer (CC0) från Poly Haven till `public/textures/`
+- `npm run setup:models` – instruktioner för GLTF-modeller + uppdatera `public/models/manifest.json`
 - `npm run dev` – utvecklingsserver (Vite)
 - `npm run build` – produktionsbygge till `dist/`
 - `npm run preview` – servera produktionsbygget lokalt
@@ -21,8 +22,15 @@ med sjön Skärsjön ca 400 m nordväst (56.3102N, 14.9395O).
   prototypens vertexfärger. Årstider (höstton, snö) sätts via shader-uniforms.
   Texturer hämtas från Poly Haven med `npm run setup`; saknas de genereras
   procedurella reservtexturer i koden, så spelet fungerar utan nedladdning.
-- `PROMPT.md` beskriver måluppdraget. Nästa etapp är **etapp 3: modeller + skog**
-  (GLTF från Quaternius, InstancedMesh + LOD).
+- **Etapp 3 klar**: skogen är tätare (800 träd) med detaljerade procedurella
+  modeller i två LOD-nivåer (hög geometri inom 70 m, enkel bortom) som
+  ombucketeras när spelaren rör sig. Stammar och stenar har PBR-texturer via
+  texturregistret (`textures.js`). Djuren har bättre modeller med enkel gång-,
+  hopp- och gunganimation; fårens ull växer synligt. Läggs GLTF-modeller
+  (Quaternius CC0) i `public/models/` används de i stället – kör
+  `npm run setup:models` för instruktioner och manifestuppdatering.
+- `PROMPT.md` beskriver måluppdraget. Nästa etapp är **etapp 4: vatten +
+  himmel + post-processing**.
 
 ## Arkitektur (src/)
 Modulerna bildar en acyklisk importkedja, från grund till topp:
@@ -36,14 +44,16 @@ Modulerna bildar en acyklisk importkedja, från grund till topp:
 | `terrain.js` | `heightAt()`, chunkad LOD-terräng (`updateTerrain`), Skärsjöns vatten, vass |
 | `terrain-material.js` | PBR-splatshader (gräs/skog/berg/grus) + årstids-uniforms |
 | `fallback-textures.js` | Procedurella reservtexturer när Poly Haven-filer saknas |
-| `vegetation.js` | Skogen (gran/tall/björk) och stenar som `InstancedMesh` |
+| `textures.js` | Texturregister: reservtextur först, Poly Haven-fil när den finns |
+| `models.js` | GLTF-register: läser `/models/manifest.json`, `cloneNormalized()` |
+| `vegetation.js` | Skogen (gran/tall/björk) och stenar: `InstancedMesh` i två LOD-nivåer |
 | `farm.js` | Gårdsbebyggelsen: bostadshus, vedbod, brygga + `box()`-hjälparen |
 | `player.js` | Spelarens rörelse, hopp, kamerastyrning, `keys` |
 | `raycast.js` | Gemensam strålkastning från siktet (`rayHit`) |
 | `farming.js` | Åkerrutor, sådd, vattning, tillväxt, `nearestPlot()` |
 | `ui.js` | Meddelanden, paneler, hotbar, inventarie (importerar inga spelsystem) |
 | `buildings.js` | Byggmeny, spökbygge, `makeBuilding()`, byggläget |
-| `animals.js` | Vilt (rådjur/hare) och tamdjur (höna/får) |
+| `animals.js` | Vilt (rådjur/hare) och tamdjur (höna/får), gång-/hoppanimation |
 | `hunting.js` | Pilbåge och pilar |
 | `fishing.js` | Fiske i Skärsjön, isfiske på vintern |
 | `economy.js` | Handlaren, bilen, köp/sälj |
@@ -72,7 +82,7 @@ för automatiska webbläsartester.
 ## Etapper (från PROMPT.md)
 1. ✅ Projektuppsättning + flytta in prototypens logik i moduler
 2. ✅ Terräng + texturer (PBR från Poly Haven, splatmap, chunk/LOD)
-3. ⬜ Modeller + skog (GLTF från Quaternius, InstancedMesh + LOD)
+3. ✅ Modeller + skog (InstancedMesh + LOD; GLTF från Quaternius via `public/models/`)
 4. ⬜ Vatten + himmel + post-processing
 5. ⬜ Väder + årstider
 6. ⬜ Ljud + spara (localStorage) + finputs, inställningsmeny med grafiknivåer

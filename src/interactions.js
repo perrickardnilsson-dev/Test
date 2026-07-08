@@ -5,7 +5,7 @@ import { YARD, SEED2CROP } from './config.js';
 import { S, give, seasonIdx, seasonName } from './state.js';
 import { camera } from './scene.js';
 import { groundMeshes } from './terrain.js';
-import { trees, killTree, rocks, killRock } from './vegetation.js';
+import { trees, killTree, rocks, killRock, treeRayTargets, rockRayTargets, vegFromHit } from './vegetation.js';
 import { house } from './farm.js';
 import { plots, makePlot, plantSeed, nearestPlot, soilWetMat } from './farming.js';
 import { buildMode, placeBuild, builtThings } from './buildings.js';
@@ -26,22 +26,24 @@ export function toolAction() {
   if (t === 5) { doFish(); return; }
   if (S.energy < 3) { msg('För trött – vila eller ät.'); return; }
   if (t === 0) { // Yxa
-    const hits = rayHit([trees.gran.trunk, trees.gran.fol, trees.tall.trunk, trees.tall.fol, trees.bjork.trunk, trees.bjork.fol], 4.5);
+    const hits = rayHit(treeRayTargets, 4.5);
     if (hits.length) {
-      const key = hits[0].object.userData.tree, i = hits[0].instanceId, rec = trees[key].data[i];
+      const ref = vegFromHit(hits[0]);
+      const rec = ref && trees[ref.key].data[ref.index];
       if (rec && rec.alive) {
         rec.hp--; S.energy -= 2;
-        if (rec.hp <= 0) { killTree(key, i); const w = Math.round(trees[key].def.wood * rec.s); give('trä', w); msg('Trädet föll! +' + w + ' trä'); }
+        if (rec.hp <= 0) { killTree(ref.key, ref.index); const w = Math.round(trees[ref.key].def.wood * rec.s); give('trä', w); msg('Trädet föll! +' + w + ' trä'); }
         else msg('Hugger... (' + rec.hp + ')');
       }
     }
   } else if (t === 1) { // Korp
-    const hits = rayHit([rocks.im], 4.5);
+    const hits = rayHit(rockRayTargets, 4.5);
     if (hits.length) {
-      const i = hits[0].instanceId, rec = rocks.data[i];
+      const ref = vegFromHit(hits[0]);
+      const rec = ref && rocks.data[ref.index];
       if (rec && rec.alive) {
         rec.hp--; S.energy -= 2.5;
-        if (rec.hp <= 0) { killRock(i); const q = 4 + Math.floor(Math.random() * 3); give('sten', q); msg('Stenen krossad! +' + q + ' sten'); }
+        if (rec.hp <= 0) { killRock(ref.index); const q = 4 + Math.floor(Math.random() * 3); give('sten', q); msg('Stenen krossad! +' + q + ' sten'); }
         else msg('Bryter sten... (' + rec.hp + ')');
       }
     }

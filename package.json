@@ -6,6 +6,7 @@
   "description": "Tranerås – Gården vid Skärsjön. Förstapersons bondgårds- och överlevnadsspel i webbläsaren.",
   "scripts": {
     "setup": "node scripts/setup-textures.mjs",
+    "setup:models": "node scripts/setup-models.mjs",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"

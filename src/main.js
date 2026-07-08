@@ -5,7 +5,7 @@ import { DAY_REAL } from './config.js';
 import { S } from './state.js';
 import { renderer, scene, camera } from './scene.js';
 import { heightAt, recolorGround, updateTerrain } from './terrain.js';
-import { treeSeasonColors } from './vegetation.js';
+import { treeSeasonColors, updateVegetation } from './vegetation.js';
 import './farm.js';
 import { updatePlants } from './farming.js';
 import { updateGhost } from './buildings.js';
@@ -40,7 +40,11 @@ if (import.meta.env.DEV) {
   const { setWeather } = await import('./weather.js');
   const { toolAction, interact } = await import('./interactions.js');
   const { plots } = await import('./farming.js');
-  window.__traneras = { S, newDay, recolorGround, treeSeasonColors, player, water, setWeather, toolAction, interact, plots };
+  const { trees, rocks, treeRayTargets, rockRayTargets, vegFromHit } = await import('./vegetation.js');
+  const { wild, livestock, addLivestock } = await import('./animals.js');
+  const { loadedModels } = await import('./models.js');
+  const { rayHit } = await import('./raycast.js');
+  window.__traneras = { S, newDay, recolorGround, treeSeasonColors, player, water, setWeather, toolAction, interact, plots, trees, rocks, wild, livestock, addLivestock, loadedModels, treeRayTargets, rockRayTargets, vegFromHit, rayHit, camera };
 }
 
 function die() {
@@ -88,6 +92,7 @@ function loop() {
     updateHUD();
   }
   updateTerrain(player.x, player.z);
+  updateVegetation(player.x, player.z);
   renderer.render(scene, camera);
   stats && stats.end();
 }

@@ -5,25 +5,26 @@ import * as THREE from 'three';
 
 const SIZE = 512;
 
-function phash(x, y, P) {
-  const xi = ((x % P) + P) % P, yi = ((y % P) + P) % P;
+function phash(x, y, Px, Py) {
+  const xi = ((x % Px) + Px) % Px, yi = ((y % Py) + Py) % Py;
   const s = Math.sin(xi * 127.1 + yi * 311.7) * 43758.5453;
   return s - Math.floor(s);
 }
 
-function pnoise(x, y, P) {
+function pnoise(x, y, Px, Py) {
   const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
   const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
-  return phash(xi, yi, P) * (1 - u) * (1 - v) + phash(xi + 1, yi, P) * u * (1 - v)
-       + phash(xi, yi + 1, P) * (1 - u) * v + phash(xi + 1, yi + 1, P) * u * v;
+  return phash(xi, yi, Px, Py) * (1 - u) * (1 - v) + phash(xi + 1, yi, Px, Py) * u * (1 - v)
+       + phash(xi, yi + 1, Px, Py) * (1 - u) * v + phash(xi + 1, yi + 1, Px, Py) * u * v;
 }
 
-// Periodiskt fraktalbrus i [0,1], sömlöst över texturkanten.
-function fbm(px, py, oct, baseFreq) {
-  let a = 0, amp = 0.5, f = baseFreq;
+// Periodiskt fraktalbrus i [0,1], sömlöst över texturkanten. fx/fy kan skilja
+// sig åt för att ge riktning (t.ex. vertikala barkstrimmor).
+function fbm(px, py, oct, fx, fy = fx) {
+  let a = 0, amp = 0.5, gx = fx, gy = fy;
   for (let o = 0; o < oct; o++) {
-    a += pnoise(px * f, py * f, f) * amp;
-    amp *= 0.5; f *= 2;
+    a += pnoise(px * gx, py * gy, gx, gy) * amp;
+    amp *= 0.5; gx *= 2; gy *= 2;
   }
   return a;
 }
@@ -39,24 +40,24 @@ function makeTexture(data, srgb) {
   return t;
 }
 
-// Skapar {diff, nor, arm} för ett markmaterial.
-// c1/c2: grundfärger [r,g,b] 0-255, spots: {col, freq, tröskel} valfria fläckar,
-// rough: grundråhet 0-1, bump: normalstyrka.
-export function makeFallbackSet({ c1, c2, spots, rough, bump }) {
+// Skapar {diff, nor, arm} för ett material.
+// c1/c2: grundfärger [r,g,b] 0-255, fx/fy: brusfrekvens (olika → riktning),
+// spots: {col, freq, t} valfria fläckar, rough: grundråhet, bump: normalstyrka.
+export function makeFallbackSet({ c1, c2, spots, rough, bump, fx = 8, fy = fx }) {
   const n = SIZE * SIZE;
   const diff = new Uint8Array(n * 4), nor = new Uint8Array(n * 4), arm = new Uint8Array(n * 4);
   const height = new Float32Array(n);
   for (let y = 0; y < SIZE; y++) {
     for (let x = 0; x < SIZE; x++) {
       const px = x / SIZE, py = y / SIZE;
-      height[y * SIZE + x] = fbm(px, py, 5, 8);
+      height[y * SIZE + x] = fbm(px, py, 5, fx, fy);
     }
   }
   for (let y = 0; y < SIZE; y++) {
     for (let x = 0; x < SIZE; x++) {
       const i = y * SIZE + x, px = x / SIZE, py = y / SIZE;
       const h = height[i];
-      const m = fbm(px + 0.37, py + 0.71, 3, 4); // storskalig variation
+      const m = fbm(px + 0.37, py + 0.71, 3, Math.max(2, fx / 2), Math.max(2, fy / 2)); // storskalig variation
       let r = c1[0] + (c2[0] - c1[0]) * m, g = c1[1] + (c2[1] - c1[1]) * m, b = c1[2] + (c2[2] - c1[2]) * m;
       const shade = 0.78 + h * 0.44; // småskalig ljushet från höjden
       r *= shade; g *= shade; b *= shade;
@@ -84,5 +85,8 @@ export const FALLBACK_DEFS = {
   grass:  { c1: [66, 112, 52], c2: [104, 140, 66], spots: { col: [140, 150, 80], freq: 6, t: 0.62 }, rough: 0.88, bump: 5 },
   forest: { c1: [78, 64, 42],  c2: [102, 88, 58],  spots: { col: [80, 102, 50], freq: 5, t: 0.58 }, rough: 0.92, bump: 7 },
   rock:   { c1: [110, 112, 105], c2: [148, 150, 140], spots: null,                                   rough: 0.78, bump: 10 },
-  gravel: { c1: [116, 110, 100], c2: [146, 138, 122], spots: { col: [88, 84, 76], freq: 12, t: 0.6 }, rough: 0.95, bump: 8 }
+  gravel: { c1: [116, 110, 100], c2: [146, 138, 122], spots: { col: [88, 84, 76], freq: 12, t: 0.6 }, rough: 0.95, bump: 8 },
+  // vertikala strimmor: hög frekvens i x, låg i y
+  bark:      { c1: [88, 70, 54], c2: [124, 102, 78], spots: null, rough: 0.85, bump: 12, fx: 24, fy: 5 },
+  birchbark: { c1: [222, 219, 209], c2: [240, 238, 230], spots: { col: [45, 42, 38], freq: 10, t: 0.66 }, rough: 0.7, bump: 6, fx: 20, fy: 4 }
 };

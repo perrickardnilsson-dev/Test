@@ -16,7 +16,9 @@ const SETS = {
   grass: 'aerial_grass_rock',       // gräs med inslag av sten
   forest: 'forrest_ground_01',      // skogsmark med barr och mossa
   rock: 'rocky_terrain_02',         // berghällar/granit
-  gravel: 'gravelly_sand'           // grus till väg och strand
+  gravel: 'gravelly_sand',          // grus till väg och strand
+  bark: 'pine_bark',                // stammar: gran och tall
+  birchbark: 'birch_bark'           // stammar: björk
 };
 
 // map-suffix i filnamnet → kandidatnycklar i Poly Havens files-API

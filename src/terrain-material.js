@@ -7,7 +7,7 @@
 import * as THREE from 'three';
 import { W, LAKE, WATER_Y, YARD, ROAD_Z, ROAD_W } from './config.js';
 import { vnoise } from './utils.js';
-import { makeFallbackSet, FALLBACK_DEFS } from './fallback-textures.js';
+import { getTextureSet } from './textures.js';
 
 // Skogsbruset bakas till en textur så att markens skogspartier exakt matchar
 // trädplaceringens gläntor (JS-flyttal ≠ GPU-flyttal för stora sin-argument).
@@ -32,21 +32,14 @@ const uniforms = {
   uSnow: { value: 0 }
 };
 
-const SETS = ['grass', 'forest', 'rock', 'gravel'];
-const MAPS = [['D', 'diff'], ['N', 'nor'], ['A', 'arm']];
-const loader = new THREE.TextureLoader();
-for (const set of SETS) {
-  const fb = makeFallbackSet(FALLBACK_DEFS[set]);
-  for (const [suffix, map] of MAPS) {
-    const key = 'u' + set[0].toUpperCase() + set.slice(1) + suffix;
-    uniforms[key] = { value: fb[map] };
-    loader.load('/textures/' + set + '_' + map + '.jpg', tex => {
-      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-      tex.anisotropy = 4;
-      if (map === 'diff') tex.colorSpace = THREE.SRGBColorSpace;
-      uniforms[key].value = tex;
-    }, undefined, () => { /* behåll reservtexturen */ });
-  }
+// Texturslottarna ({value}) från registret används direkt som uniforms –
+// när en Poly Haven-fil laddats pekar slotten på den nya texturen.
+for (const set of ['grass', 'forest', 'rock', 'gravel']) {
+  const s = getTextureSet(set);
+  const prefix = 'u' + set[0].toUpperCase() + set.slice(1);
+  uniforms[prefix + 'D'] = s.diff;
+  uniforms[prefix + 'N'] = s.nor;
+  uniforms[prefix + 'A'] = s.arm;
 }
 
 export function setSeasonUniforms(autumn, snow) {
