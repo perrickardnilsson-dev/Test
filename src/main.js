@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { rand } from './utils.js';
 import { DAY_REAL } from './config.js';
-import { S } from './state.js';
+import { S, seasonIdx, isWinter } from './state.js';
 import { renderer, scene, camera } from './scene.js';
 import { heightAt, recolorGround, updateTerrain } from './terrain.js';
 import { treeSeasonColors, updateVegetation } from './vegetation.js';
@@ -15,6 +15,8 @@ import { updateArrows } from './hunting.js';
 import { updateFishing } from './fishing.js';
 import { trader, truck } from './economy.js';
 import { rollWeather, updateSky } from './weather.js';
+import { updateWater, setLakeWinter } from './water.js';
+import { composer, setSeasonGrade } from './post.js';
 import { newDay } from './days.js';
 import { $, msg, drawHotbar } from './ui.js';
 import { updateHUD } from './hud.js';
@@ -36,7 +38,8 @@ if (import.meta.env.DEV) {
 // Debughandtag i dev-läge, t.ex. för att testa årstider från konsolen:
 //   __traneras.S.day = 13; __traneras.newDay();
 if (import.meta.env.DEV) {
-  const { water } = await import('./terrain.js');
+  const { water, ice } = await import('./water.js');
+  const { sky, moonLight } = await import('./sky.js');
   const { setWeather } = await import('./weather.js');
   const { toolAction, interact } = await import('./interactions.js');
   const { plots } = await import('./farming.js');
@@ -44,7 +47,7 @@ if (import.meta.env.DEV) {
   const { wild, livestock, addLivestock } = await import('./animals.js');
   const { loadedModels } = await import('./models.js');
   const { rayHit } = await import('./raycast.js');
-  window.__traneras = { S, newDay, recolorGround, treeSeasonColors, player, water, setWeather, toolAction, interact, plots, trees, rocks, wild, livestock, addLivestock, loadedModels, treeRayTargets, rockRayTargets, vegFromHit, rayHit, camera };
+  window.__traneras = { S, newDay, recolorGround, treeSeasonColors, player, water, ice, sky, moonLight, setWeather, toolAction, interact, plots, trees, rocks, wild, livestock, addLivestock, loadedModels, treeRayTargets, rockRayTargets, vegFromHit, rayHit, camera, composer, renderer, scene };
 }
 
 function die() {
@@ -93,7 +96,8 @@ function loop() {
   }
   updateTerrain(player.x, player.z);
   updateVegetation(player.x, player.z);
-  renderer.render(scene, camera);
+  updateWater(dt);
+  composer.render();
   stats && stats.end();
 }
 
@@ -101,6 +105,7 @@ $('startbtn').onclick = () => {
   $('start').style.display = 'none';
   S.started = true;
   drawHotbar(); recolorGround(); treeSeasonColors(); spawnWild(); rollWeather(); newDay();
+  setLakeWinter(isWinter()); setSeasonGrade(seasonIdx());
   S.day = 1; trader.active = true; // handlaren är där dag 1
   msg('Välkommen till Tranerås! Hugg träd, gräv åkrar och överlev.');
   renderer.domElement.requestPointerLock();

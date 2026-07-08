@@ -29,8 +29,16 @@ med sjön Skärsjön ca 400 m nordväst (56.3102N, 14.9395O).
   hopp- och gunganimation; fårens ull växer synligt. Läggs GLTF-modeller
   (Quaternius CC0) i `public/models/` används de i stället – kör
   `npm run setup:models` för instruktioner och manifestuppdatering.
-- `PROMPT.md` beskriver måluppdraget. Nästa etapp är **etapp 4: vatten +
-  himmel + post-processing**.
+- **Etapp 4 klar**: Skärsjön har three:s Water-shader (planar reflektion,
+  procedurell vågnormalkarta, solglitter) som byts mot en ismesh på vintern.
+  Himlen är three:s Sky (Preetham-spridning + procedurella moln styrda av
+  vädret) med ACES-tonmappning, månljus nattetid och kvarvarande stjärnor/måne.
+  Post-processing via EffectComposer: MSAA, HDR-klämning, diskret bloom,
+  vinjett och färgtoning per årstid. OBS: Sky-boxen är utbytt mot en sfär –
+  boxens jättetrianglar klipps trasigt (vit kil). SSAO/CSM medvetet bortvalda
+  tills grafikinställningarna i etapp 6.
+- `PROMPT.md` beskriver måluppdraget. Nästa etapp är **etapp 5: väder +
+  årstider** (finputs – grunderna finns redan).
 
 ## Arkitektur (src/)
 Modulerna bildar en acyklisk importkedja, från grund till topp:
@@ -41,7 +49,10 @@ Modulerna bildar en acyklisk importkedja, från grund till topp:
 | `config.js` | Alla konstanter: värld, verktyg, priser, fröer, byggnader |
 | `state.js` | Speltillståndet `S`, årstidshjälpare, `give()` |
 | `scene.js` | Renderare, scen, kamera, ljus, stjärnor/måne/sol |
-| `terrain.js` | `heightAt()`, chunkad LOD-terräng (`updateTerrain`), Skärsjöns vatten, vass |
+| `terrain.js` | `heightAt()`, chunkad LOD-terräng (`updateTerrain`), vassen |
+| `water.js` | Skärsjöns vatten (Water-shader) och vinterns is, `setLakeWinter()` |
+| `sky.js` | Fysisk himmel (Sky) med moln, månljus, `setSkyState()` |
+| `post.js` | EffectComposer: bloom, vinjett, årstidston, `setSeasonGrade()` |
 | `terrain-material.js` | PBR-splatshader (gräs/skog/berg/grus) + årstids-uniforms |
 | `fallback-textures.js` | Procedurella reservtexturer när Poly Haven-filer saknas |
 | `textures.js` | Texturregister: reservtextur först, Poly Haven-fil när den finns |
@@ -83,6 +94,6 @@ för automatiska webbläsartester.
 1. ✅ Projektuppsättning + flytta in prototypens logik i moduler
 2. ✅ Terräng + texturer (PBR från Poly Haven, splatmap, chunk/LOD)
 3. ✅ Modeller + skog (InstancedMesh + LOD; GLTF från Quaternius via `public/models/`)
-4. ⬜ Vatten + himmel + post-processing
+4. ✅ Vatten + himmel + post-processing (Water, Sky+moln, ACES, bloom/vinjett/årstidston)
 5. ⬜ Väder + årstider
 6. ⬜ Ljud + spara (localStorage) + finputs, inställningsmeny med grafiknivåer

@@ -116,14 +116,7 @@ export function recolorGround() {
   setSeasonUniforms(si === 2 ? 1 : 0, si === 3 ? 1 : 0);
 }
 
-// Vatten – Skärsjön
-export const waterMat = new THREE.MeshPhongMaterial({ color: 0x2e5d6e, transparent: true, opacity: 0.82, shininess: 90, specular: 0x99bbcc });
-export const water = new THREE.Mesh(new THREE.PlaneGeometry(220, 220), waterMat);
-water.rotation.x = -Math.PI / 2;
-water.position.set(LAKE.x, WATER_Y, LAKE.z);
-scene.add(water);
-
-// Vass runt sjön
+// Vass runt sjön (Skärsjöns vatten bor i water.js)
 {
   const g = new THREE.CylinderGeometry(0.02, 0.03, 1.6, 4), m = new THREE.MeshLambertMaterial({ color: 0x8a9a52 });
   const im = new THREE.InstancedMesh(g, m, 260);

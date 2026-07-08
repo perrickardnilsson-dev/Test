@@ -2,7 +2,9 @@
 import { SEASON_DAYS } from './config.js';
 import { S, give, seasonName, seasonIdx, isWinter } from './state.js';
 import { scene } from './scene.js';
-import { recolorGround, waterMat } from './terrain.js';
+import { recolorGround } from './terrain.js';
+import { setLakeWinter } from './water.js';
+import { setSeasonGrade } from './post.js';
 import { treeSeasonColors } from './vegetation.js';
 import { plots, soilMat } from './farming.js';
 import { livestock, wild, addWild } from './animals.js';
@@ -41,8 +43,8 @@ export function newDay() {
   if ((S.day - 1) % SEASON_DAYS === 0 && S.day > 1) {
     recolorGround();
     treeSeasonColors();
-    waterMat.color.set(isWinter() ? 0xc8d8e0 : 0x2e5d6e);
-    waterMat.opacity = isWinter() ? 0.95 : 0.82;
+    setLakeWinter(isWinter());
+    setSeasonGrade(seasonIdx());
     msg('Ny årstid: ' + seasonName() + (isWinter() ? ' – sjön fryser, isfiske möjligt!' : ''));
   }
   // handlare var tredje dag

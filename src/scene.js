@@ -3,6 +3,8 @@ import * as THREE from 'three';
 import { rand } from './utils.js';
 
 export const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.65;
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
@@ -46,6 +48,3 @@ scene.add(stars);
 
 export const moon = new THREE.Mesh(new THREE.SphereGeometry(9, 12, 12), new THREE.MeshBasicMaterial({ color: 0xdfe6f0, fog: false }));
 scene.add(moon);
-
-export const sunBall = new THREE.Mesh(new THREE.SphereGeometry(12, 12, 12), new THREE.MeshBasicMaterial({ color: 0xffe9a8, fog: false }));
-scene.add(sunBall);

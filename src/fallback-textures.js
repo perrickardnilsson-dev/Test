@@ -81,6 +81,35 @@ export function makeFallbackSet({ c1, c2, spots, rough, bump, fx = 8, fy = fx })
   return { diff: makeTexture(diff, true), nor: makeTexture(nor, false), arm: makeTexture(arm, false) };
 }
 
+// Sömlös normalkarta ur fraktalbrus – används för vattenvågor och is.
+export function makeNormalNoiseTexture(bump = 8, freq = 6) {
+  const N = 256, data = new Uint8Array(N * N * 4);
+  const height = new Float32Array(N * N);
+  for (let y = 0; y < N; y++)
+    for (let x = 0; x < N; x++)
+      height[y * N + x] = fbm(x / N, y / N, 5, freq);
+  for (let y = 0; y < N; y++) {
+    for (let x = 0; x < N; x++) {
+      const i = y * N + x;
+      const xl = height[y * N + ((x - 1 + N) % N)], xr = height[y * N + ((x + 1) % N)];
+      const yu = height[((y - 1 + N) % N) * N + x], yd = height[((y + 1) % N) * N + x];
+      let nx = (xl - xr) * bump, ny = (yu - yd) * bump, nz = 1;
+      const l = Math.hypot(nx, ny, nz);
+      data[i * 4] = (nx / l * 0.5 + 0.5) * 255;
+      data[i * 4 + 1] = (ny / l * 0.5 + 0.5) * 255;
+      data[i * 4 + 2] = (nz / l * 0.5 + 0.5) * 255;
+      data[i * 4 + 3] = 255;
+    }
+  }
+  const t = new THREE.DataTexture(data, N, N, THREE.RGBAFormat);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.magFilter = THREE.LinearFilter;
+  t.minFilter = THREE.LinearMipmapLinearFilter;
+  t.generateMipmaps = true;
+  t.needsUpdate = true;
+  return t;
+}
+
 export const FALLBACK_DEFS = {
   grass:  { c1: [66, 112, 52], c2: [104, 140, 66], spots: { col: [140, 150, 80], freq: 6, t: 0.62 }, rough: 0.88, bump: 5 },
   forest: { c1: [78, 64, 42],  c2: [102, 88, 58],  spots: { col: [80, 102, 50], freq: 5, t: 0.58 }, rough: 0.92, bump: 7 },
