@@ -13,6 +13,7 @@ import { scene } from './scene.js';
 import { heightAt } from './terrain.js';
 import { applyTextureSet } from './textures.js';
 import { getModel } from './models.js';
+import { applyWindSway } from './wind.js';
 
 const NEAR_R = 70;        // inom detta avstånd används högupplöst geometri
 const REBUCKET_DIST = 8;  // ombucketera när spelaren rört sig så här långt
@@ -139,6 +140,7 @@ const _M = new THREE.Matrix4(), _Q = new THREE.Quaternion(), _V = new THREE.Vect
 
 function makeLayerMeshes(parts, capacity, rayTargets) {
   return parts.map(p => {
+    if (p.isFol) applyWindSway(p.mat); // kronorna gungar i vinden
     const mesh = new THREE.InstancedMesh(p.geo, p.mat, capacity);
     mesh.castShadow = true;
     mesh.frustumCulled = false;

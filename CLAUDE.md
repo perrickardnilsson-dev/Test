@@ -37,8 +37,14 @@ med sjön Skärsjön ca 400 m nordväst (56.3102N, 14.9395O).
   vinjett och färgtoning per årstid. OBS: Sky-boxen är utbytt mot en sfär –
   boxens jättetrianglar klipps trasigt (vit kil). SSAO/CSM medvetet bortvalda
   tills grafikinställningarna i etapp 6.
-- `PROMPT.md` beskriver måluppdraget. Nästa etapp är **etapp 5: väder +
-  årstider** (finputs – grunderna finns redan).
+- **Etapp 5 klar**: regnet är vindlutade linjesegment och snön driver i
+  sidled (mjuka runda spriter), båda i en låda som följer spelaren. Dimbankar
+  (sprites) ligger över Skärsjön i gryningen och vid Dimma. På hösten faller
+  löv kring spelaren. Trädkronor och vass gungar i vinden via en
+  shaderinjektion (`wind.js`) vars styrka sätts av vädret. Väderomslag glider
+  mjukt (himmel-, moln- och dimparametrar lerpas mot mål).
+- `PROMPT.md` beskriver måluppdraget. Nästa etapp är **etapp 6: ljud + spara
+  (localStorage) + finputs, inställningsmeny med grafiknivåer**.
 
 ## Arkitektur (src/)
 Modulerna bildar en acyklisk importkedja, från grund till topp:
@@ -68,7 +74,8 @@ Modulerna bildar en acyklisk importkedja, från grund till topp:
 | `hunting.js` | Pilbåge och pilar |
 | `fishing.js` | Fiske i Skärsjön, isfiske på vintern |
 | `economy.js` | Handlaren, bilen, köp/sälj |
-| `weather.js` | Väder, himmel, dygnsljus, nederbördspartiklar |
+| `wind.js` | Vinduniforms + shaderinjektion för gungande kronor/vass |
+| `weather.js` | Väder, dygnsljus, nederbörd, dimbankar, höstlöv |
 | `days.js` | `sleep()`/`newDay()`: årstidsbyte, djurproduktion, handlarschema |
 | `interactions.js` | Verktygsanvändning (vänsterklick) och interaktion (E) |
 | `hud.js` | Mätare, klocka, pengar, kontextprompten |
@@ -95,5 +102,5 @@ för automatiska webbläsartester.
 2. ✅ Terräng + texturer (PBR från Poly Haven, splatmap, chunk/LOD)
 3. ✅ Modeller + skog (InstancedMesh + LOD; GLTF från Quaternius via `public/models/`)
 4. ✅ Vatten + himmel + post-processing (Water, Sky+moln, ACES, bloom/vinjett/årstidston)
-5. ⬜ Väder + årstider
+5. ✅ Väder + årstider (regn/snö-partiklar, dimbankar, höstlöv, vindgung, mjuka omslag)
 6. ⬜ Ljud + spara (localStorage) + finputs, inställningsmeny med grafiknivåer

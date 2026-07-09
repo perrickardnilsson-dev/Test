@@ -7,6 +7,7 @@ import { W, LAKE, WATER_Y, YARD, ROAD_Z, ROAD_W } from './config.js';
 import { seasonIdx } from './state.js';
 import { scene } from './scene.js';
 import { terrainMaterial, setSeasonUniforms } from './terrain-material.js';
+import { applyWindSway } from './wind.js';
 
 export function heightAt(x, z) {
   let h = 2.5 + vnoise(x * 0.012 + 13, z * 0.012 + 7) * 7 + vnoise(x * 0.05, z * 0.05) * 1.4;
@@ -119,6 +120,7 @@ export function recolorGround() {
 // Vass runt sjön (Skärsjöns vatten bor i water.js)
 {
   const g = new THREE.CylinderGeometry(0.02, 0.03, 1.6, 4), m = new THREE.MeshLambertMaterial({ color: 0x8a9a52 });
+  applyWindSway(m, -0.8, 0.14); // vasstråna vajar (lokalt y: -0.8..0.8)
   const im = new THREE.InstancedMesh(g, m, 260);
   const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), V = new THREE.Vector3();
   let n = 0;
