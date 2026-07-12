@@ -31,7 +31,12 @@ fungerar även offline. Vill du ha finare 3D-modeller (Quaternius, CC0) kör du
 | E | Interagera |
 | Tab | Inventarie |
 | Q | Byt frö |
-| Esc | Stäng panel |
+| Esc | Inställningar / stäng panel |
+
+Spelet autosparas varje morgon (localStorage) – klicka **Fortsätt** på
+startskärmen för att spela vidare. I inställningsmenyn (Esc) finns
+grafiknivåer (låg/mellan/hög) och ljudvolym. Ljudet är procedurellt
+syntetiserat med WebAudio och kräver inga nedladdningar.
 
 ## Projektet
 

@@ -5,6 +5,7 @@ import { scene, camera } from './scene.js';
 import { heightAt } from './terrain.js';
 import { wild } from './animals.js';
 import { msg } from './ui.js';
+import { sfx } from './audio.js';
 
 const arrows = [];
 
@@ -19,6 +20,7 @@ export function shootArrow() {
   m.position.copy(camera.position).addScaledVector(dir, 0.8);
   m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
   scene.add(m);
+  sfx('pilbage');
   arrows.push({ m, vel: dir.multiplyScalar(38), life: 4 });
 }
 
@@ -35,6 +37,7 @@ export function updateArrows(dt) {
       if (a.m.position.distanceTo(w.g.position.clone().setY(w.g.position.y + 0.8)) < r) {
         w.hp--;
         hit = true;
+        sfx('traff');
         if (w.hp <= 0) {
           scene.remove(w.g);
           wild.splice(j, 1);

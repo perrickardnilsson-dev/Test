@@ -43,8 +43,18 @@ med sjön Skärsjön ca 400 m nordväst (56.3102N, 14.9395O).
   löv kring spelaren. Trädkronor och vass gungar i vinden via en
   shaderinjektion (`wind.js`) vars styrka sätts av vädret. Väderomslag glider
   mjukt (himmel-, moln- och dimparametrar lerpas mot mål).
-- `PROMPT.md` beskriver måluppdraget. Nästa etapp är **etapp 6: ljud + spara
-  (localStorage) + finputs, inställningsmeny med grafiknivåer**.
+- **Etapp 6 klar**: ljud är procedurellt syntetiserat med WebAudio (`audio.js`)
+  – vindbrus som följer vindstyrkan, fågelkvitter dagtid (ej vinter/regn),
+  regnbrus samt effekter för hugg, sten, pilbåge, plask, napp, köp m.m.
+  Sparfunktion med localStorage (`save.js`): autosparas varje morgon, manuellt
+  via menyn; världen genereras deterministiskt (seedad slump) så fällda
+  träd/stenar sparas som index. Startskärmen får en Fortsätt-knapp när
+  sparning finns. Inställningsmeny på Esc (`settings.js`) med grafiknivåer
+  låg/mellan/hög (pixelratio, skuggor, bloom, vattenreflektion, LOD-avstånd)
+  och ljudvolym – valen sparas i localStorage.
+- **Alla etapper i PROMPT.md är klara.** Kvarvarande bonusidéer: verklig
+  höjddata från Lantmäteriet, SSAO/CSM som tillval, GLTF-modeller och Poly
+  Haven-texturer via setup-skripten.
 
 ## Arkitektur (src/)
 Modulerna bildar en acyklisk importkedja, från grund till topp:
@@ -77,6 +87,9 @@ Modulerna bildar en acyklisk importkedja, från grund till topp:
 | `wind.js` | Vinduniforms + shaderinjektion för gungande kronor/vass |
 | `weather.js` | Väder, dygnsljus, nederbörd, dimbankar, höstlöv |
 | `days.js` | `sleep()`/`newDay()`: årstidsbyte, djurproduktion, handlarschema |
+| `audio.js` | Procedurellt WebAudio: ambiens (vind/fåglar/regn) och `sfx()` |
+| `save.js` | localStorage-sparning: `saveGame()`/`loadGame()`, autospar |
+| `settings.js` | Inställningsmeny (Esc): grafiknivåer, volym, manuell sparning |
 | `interactions.js` | Verktygsanvändning (vänsterklick) och interaktion (E) |
 | `hud.js` | Mätare, klocka, pengar, kontextprompten |
 | `input.js` | Tangentbord, mus, pekarlås, verktygsval |
@@ -103,4 +116,4 @@ för automatiska webbläsartester.
 3. ✅ Modeller + skog (InstancedMesh + LOD; GLTF från Quaternius via `public/models/`)
 4. ✅ Vatten + himmel + post-processing (Water, Sky+moln, ACES, bloom/vinjett/årstidston)
 5. ✅ Väder + årstider (regn/snö-partiklar, dimbankar, höstlöv, vindgung, mjuka omslag)
-6. ⬜ Ljud + spara (localStorage) + finputs, inställningsmeny med grafiknivåer
+6. ✅ Ljud (procedurellt WebAudio) + spara (localStorage, autospar + Fortsätt) + inställningsmeny (grafik låg/mellan/hög, volym)

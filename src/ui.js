@@ -2,6 +2,7 @@
 import { TOOLS, FOOD, SEED2CROP } from './config.js';
 import { S, give } from './state.js';
 import { renderer } from './scene.js';
+import { sfx } from './audio.js';
 
 export const $ = id => document.getElementById(id);
 export const uiState = { open: null }; // vilken bigpanel som är öppen
@@ -43,7 +44,7 @@ export function openPanelById(id) {
 }
 
 export function closePanels() {
-  ['p-inv', 'p-shop', 'p-build'].forEach(i => $(i).style.display = 'none');
+  ['p-inv', 'p-shop', 'p-build', 'p-settings'].forEach(i => $(i).style.display = 'none');
   uiState.open = null;
   if (S.started && !S.dead) renderer.domElement.requestPointerLock();
 }
@@ -76,5 +77,6 @@ export function eat(it) {
   if (S.inv[it] <= 0) delete S.inv[it];
   S.hunger = Math.min(100, S.hunger + FOOD[it]);
   S.energy = Math.min(100, S.energy + FOOD[it] * 0.5);
+  sfx('at');
   msg('Åt ' + it + '.');
 }

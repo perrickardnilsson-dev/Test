@@ -6,6 +6,7 @@ import { cancelBuild, openBuild } from './buildings.js';
 import { interact, toolAction, cycleSeed } from './interactions.js';
 import { clamp } from './utils.js';
 import { togglePanel, closePanels, drawHotbar, onToolSelect, uiState } from './ui.js';
+import { toggleSettings } from './settings.js';
 
 let locked = false;
 const cv = renderer.domElement;
@@ -29,7 +30,7 @@ export function initInput() {
   addEventListener('keydown', e => {
     if (!S.started) return;
     if (e.code === 'Tab') { e.preventDefault(); togglePanel('p-inv'); return; }
-    if (e.code === 'Escape' && uiState.open) { closePanels(); return; }
+    if (e.code === 'Escape') { if (uiState.open) closePanels(); else toggleSettings(); return; }
     keys[e.code] = true;
     if (e.code.startsWith('Digit')) { const n = +e.code.slice(5); if (n >= 1 && n <= 7) selectTool(n - 1); }
     if (e.code === 'KeyE') interact();

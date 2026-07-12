@@ -10,6 +10,8 @@ import { plots, soilMat } from './farming.js';
 import { livestock, wild, addWild } from './animals.js';
 import { trader, truck } from './economy.js';
 import { rollWeather } from './weather.js';
+import { saveGame } from './save.js';
+import { sfx } from './audio.js';
 import { msg } from './ui.js';
 
 export function sleep() {
@@ -17,6 +19,7 @@ export function sleep() {
   S.time = 6;
   S.energy = 100;
   S.hunger = Math.max(0, S.hunger - 15);
+  sfx('somn');
   newDay();
   msg('En ny morgon på Tranerås. Dag ' + S.day + ' · ' + seasonName());
 }
@@ -53,4 +56,6 @@ export function newDay() {
   if (trader.active) msg('Handlaren kommer till Traneråsvägen i dag (09–17).');
   // vilt fylls på
   if (wild.length < 8) addWild(Math.random() < 0.5 ? 'rådjur' : 'hare');
+  // autosparning varje ny morgon
+  if (S.started) saveGame();
 }

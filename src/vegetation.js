@@ -6,7 +6,7 @@
 // prototypen.
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { rand, vnoise } from './utils.js';
+import { rand, vnoise, mulberry32 } from './utils.js';
 import { W, WATER_Y, YARD, ROAD_Z, ROAD_W } from './config.js';
 import { seasonIdx } from './state.js';
 import { scene } from './scene.js';
@@ -15,8 +15,15 @@ import { applyTextureSet } from './textures.js';
 import { getModel } from './models.js';
 import { applyWindSway } from './wind.js';
 
-const NEAR_R = 70;        // inom detta avstånd används högupplöst geometri
+let NEAR_R = 70;          // inom detta avstånd används högupplöst geometri
 const REBUCKET_DIST = 8;  // ombucketera när spelaren rört sig så här långt
+
+// Grafiknivå: avstånd för högupplöst geometri
+export function setVegDetail(dist) { NEAR_R = dist; dirty = true; }
+
+// Deterministisk placering (seedad) – krävs för att sparfilen ska kunna
+// referera till träd/stenar via index.
+const vrand = (() => { const r = mulberry32(0x5eed7a2); return (a, b) => a + r() * (b - a); })();
 
 // ===== Material =====
 const granBarkMat = applyTextureSet(new THREE.MeshStandardMaterial({ color: 0xb0977f, roughness: 1 }), 'bark');
@@ -207,9 +214,9 @@ function placeTrees(count, hp) {
   const list = [];
   let tries = 0;
   while (list.length < count && tries++ < 30000) {
-    const x = rand(-W / 2 + 8, W / 2 - 8), z = rand(-W / 2 + 8, W / 2 - 8);
+    const x = vrand(-W / 2 + 8, W / 2 - 8), z = vrand(-W / 2 + 8, W / 2 - 8);
     if (!okTreeSpot(x, z)) continue;
-    list.push({ x, z, h: heightAt(x, z), s: rand(0.8, 1.35), ry: rand(0, Math.PI * 2), hp, alive: true });
+    list.push({ x, z, h: heightAt(x, z), s: vrand(0.8, 1.35), ry: vrand(0, Math.PI * 2), hp, alive: true });
   }
   return list;
 }
@@ -239,11 +246,11 @@ function placeTrees(count, hp) {
   const g = rockGeos();
   let tries = 0;
   while (rocks.data.length < 70 && tries++ < 8000) {
-    const x = rand(-W / 2 + 8, W / 2 - 8), z = rand(-W / 2 + 8, W / 2 - 8), h = heightAt(x, z);
+    const x = vrand(-W / 2 + 8, W / 2 - 8), z = vrand(-W / 2 + 8, W / 2 - 8), h = heightAt(x, z);
     if (h < WATER_Y + 0.4 || Math.abs(z - ROAD_Z) < ROAD_W + 1) continue;
     if (Math.hypot(x - YARD.x, z - YARD.z) < 10) continue;
-    const s = rand(0.5, 1.6);
-    rocks.data.push({ x, z, h: h + 0.25 * s, s, ry: rand(0, Math.PI * 2), hp: 4, alive: true });
+    const s = vrand(0.5, 1.6);
+    rocks.data.push({ x, z, h: h + 0.25 * s, s, ry: vrand(0, Math.PI * 2), hp: 4, alive: true });
   }
   rocks.sp = buildSpecies('sten', {
     glbHeight: 1.3,

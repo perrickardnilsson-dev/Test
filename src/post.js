@@ -60,8 +60,8 @@ composer.addPass(new ShaderPass(ClampShader));
 
 // Hög tröskel: bara riktigt HDR-ljusa källor (solskivan, solglitter) bloomar,
 // inte dagshimlen eller den ljusa horisonten.
-const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.2, 0.3, 2.0);
-composer.addPass(bloom);
+export const bloomPass = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.2, 0.3, 2.0);
+composer.addPass(bloomPass);
 
 const grade = new ShaderPass(GradeShader);
 composer.addPass(grade);

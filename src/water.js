@@ -8,21 +8,39 @@ import { scene, sun } from './scene.js';
 import { makeNormalNoiseTexture } from './fallback-textures.js';
 
 const geo = new THREE.PlaneGeometry(220, 220);
+const waterNormals = makeNormalNoiseTexture(10, 8);
 
-export const water = new Water(geo, {
-  textureWidth: 512,
-  textureHeight: 512,
-  waterNormals: makeNormalNoiseTexture(10, 8),
-  sunDirection: new THREE.Vector3(0, 1, 0),
-  sunColor: 0xfff2d8,
-  waterColor: 0x1e4d5e,
-  distortionScale: 2.2,
-  fog: true
-});
-water.rotation.x = -Math.PI / 2;
-water.position.set(LAKE.x, WATER_Y, LAKE.z);
-water.material.uniforms.size.value = 6; // tätare vågmönster för en liten skogssjö
+function buildWater(texSize) {
+  const w = new Water(geo, {
+    textureWidth: texSize,
+    textureHeight: texSize,
+    waterNormals,
+    sunDirection: new THREE.Vector3(0, 1, 0),
+    sunColor: 0xfff2d8,
+    waterColor: 0x1e4d5e,
+    distortionScale: 2.2,
+    fog: true
+  });
+  w.rotation.x = -Math.PI / 2;
+  w.position.set(LAKE.x, WATER_Y, LAKE.z);
+  w.material.uniforms.size.value = 6; // tätare vågmönster för en liten skogssjö
+  return w;
+}
+
+export let water = buildWater(512);
 scene.add(water);
+
+// Grafiknivå: reflektionens upplösning (bygger om Water-objektet)
+export function setWaterQuality(texSize) {
+  const wasVisible = water.visible;
+  const time = water.material.uniforms.time.value;
+  scene.remove(water);
+  water.material.dispose();
+  water = buildWater(texSize);
+  water.visible = wasVisible;
+  water.material.uniforms.time.value = time;
+  scene.add(water);
+}
 
 // Is på vintern
 const iceMat = new THREE.MeshStandardMaterial({

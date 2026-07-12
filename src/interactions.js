@@ -16,6 +16,7 @@ import { trader, truck, openShop } from './economy.js';
 import { sleep } from './days.js';
 import { livestock } from './animals.js';
 import { msg, uiState } from './ui.js';
+import { sfx } from './audio.js';
 import { rayHit } from './raycast.js';
 
 export function toolAction() {
@@ -32,7 +33,8 @@ export function toolAction() {
       const rec = ref && trees[ref.key].data[ref.index];
       if (rec && rec.alive) {
         rec.hp--; S.energy -= 2;
-        if (rec.hp <= 0) { killTree(ref.key, ref.index); const w = Math.round(trees[ref.key].def.wood * rec.s); give('trä', w); msg('Trädet föll! +' + w + ' trä'); }
+        sfx('hugg');
+        if (rec.hp <= 0) { killTree(ref.key, ref.index); const w = Math.round(trees[ref.key].def.wood * rec.s); give('trä', w); sfx('falla'); msg('Trädet föll! +' + w + ' trä'); }
         else msg('Hugger... (' + rec.hp + ')');
       }
     }
@@ -43,7 +45,8 @@ export function toolAction() {
       const rec = ref && rocks.data[ref.index];
       if (rec && rec.alive) {
         rec.hp--; S.energy -= 2.5;
-        if (rec.hp <= 0) { killRock(ref.index); const q = 4 + Math.floor(Math.random() * 3); give('sten', q); msg('Stenen krossad! +' + q + ' sten'); }
+        sfx('sten');
+        if (rec.hp <= 0) { killRock(ref.index); const q = 4 + Math.floor(Math.random() * 3); give('sten', q); sfx('grav'); msg('Stenen krossad! +' + q + ' sten'); }
         else msg('Bryter sten... (' + rec.hp + ')');
       }
     }
@@ -55,11 +58,12 @@ export function toolAction() {
       for (const pl of plots) if (Math.hypot(pl.x - p.x, pl.z - p.z) < 1.9) { msg('Redan uppgrävt här.'); return; }
       makePlot(Math.round(p.x / 2) * 2, Math.round(p.z / 2) * 2);
       S.energy -= 4;
+      sfx('grav');
       msg('Åkerruta uppgrävd. Tryck E för att så.');
     }
   } else if (t === 3) { // Vattenkanna
     const p = nearestPlot();
-    if (p) { p.watered = true; p.mesh.material = soilWetMat; msg('Vattnat.'); S.energy -= 1; }
+    if (p) { p.watered = true; p.mesh.material = soilWetMat; sfx('vatten'); msg('Vattnat.'); S.energy -= 1; }
   }
 }
 
@@ -78,7 +82,7 @@ export function interact() {
   for (const b of builtThings) if (b.id === 'rokeri' && Math.hypot(b.x - player.x, b.z - player.z) < 3.5) { smoke(); return; }
   // Tamdjur – klipp får
   for (const a of livestock) {
-    if (a.kind === 'får' && a.wool >= 1 && camera.position.distanceTo(a.g.position) < 3) { a.wool = 0; give('ull', 1); msg('Fåret klippt! +1 ull'); return; }
+    if (a.kind === 'får' && a.wool >= 1 && camera.position.distanceTo(a.g.position) < 3) { a.wool = 0; give('ull', 1); sfx('klipp'); msg('Fåret klippt! +1 ull'); return; }
   }
   // Åkerruta
   const p = nearestPlot();
@@ -88,6 +92,7 @@ export function interact() {
       give(crop, n);
       p.plant.mesh.removeFromParent();
       p.plant = null;
+      sfx('skorda');
       msg('Skördat! +' + n + ' ' + crop);
       return;
     }
@@ -99,6 +104,7 @@ export function interact() {
       S.inv[seed]--;
       if (S.inv[seed] <= 0) delete S.inv[seed];
       plantSeed(p, seed);
+      sfx('sa');
       msg('Sått ' + def.crop + '. Vattna för snabbare växt!');
       return;
     }

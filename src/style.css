@@ -36,5 +36,7 @@ canvas { display:block; }
 #start p { font-size:14px; line-height:1.55; margin-bottom:16px; color:#c9bfa6; }
 #ctrl { text-align:left; display:inline-block; font-size:13px; line-height:1.8; color:#b8a888; margin-bottom:20px; }
 #ctrl b { color:#e8d48a; display:inline-block; width:110px; }
-#startbtn { background:#6a5330; color:#f5ead0; border:1px solid #cfae72; border-radius:8px; padding:12px 34px; font-size:17px; cursor:pointer; font-family:Georgia,serif; }
-#startbtn:hover { background:#84693e; }
+#startbtn, #continuebtn { background:#6a5330; color:#f5ead0; border:1px solid #cfae72; border-radius:8px; padding:12px 34px; font-size:17px; cursor:pointer; font-family:Georgia,serif; margin:0 6px; }
+#startbtn:hover, #continuebtn:hover { background:#84693e; }
+#continuebtn { background:#3e5a35; border-color:#9db48f; }
+#continuebtn:hover { background:#527347; }

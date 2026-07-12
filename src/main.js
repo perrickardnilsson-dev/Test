@@ -18,11 +18,15 @@ import { rollWeather, updateSky } from './weather.js';
 import { updateWater, setLakeWinter } from './water.js';
 import { composer, setSeasonGrade } from './post.js';
 import { newDay } from './days.js';
+import { initAudio, updateAmbience } from './audio.js';
+import { hasSave, loadGame, clearSave } from './save.js';
+import { applySettings } from './settings.js';
 import { $, msg, drawHotbar } from './ui.js';
 import { updateHUD } from './hud.js';
 import { initInput } from './input.js';
 
 initInput();
+applySettings();
 
 // fps-mätare under utveckling (prestandakrav: 60 fps)
 let stats = null;
@@ -47,7 +51,10 @@ if (import.meta.env.DEV) {
   const { wild, livestock, addLivestock } = await import('./animals.js');
   const { loadedModels } = await import('./models.js');
   const { rayHit } = await import('./raycast.js');
-  window.__traneras = { S, newDay, recolorGround, treeSeasonColors, player, water, ice, sky, moonLight, setWeather, toolAction, interact, plots, trees, rocks, wild, livestock, addLivestock, loadedModels, treeRayTargets, rockRayTargets, vegFromHit, rayHit, camera, composer, renderer, scene };
+  const { saveGame } = await import('./save.js');
+  const { makeBuilding, builtThings } = await import('./buildings.js');
+  const { settings, applyQuality } = await import('./settings.js');
+  window.__traneras = { S, newDay, recolorGround, treeSeasonColors, player, water, ice, sky, moonLight, setWeather, toolAction, interact, plots, trees, rocks, wild, livestock, addLivestock, loadedModels, treeRayTargets, rockRayTargets, vegFromHit, rayHit, camera, composer, renderer, scene, saveGame, makeBuilding, builtThings, settings, applyQuality };
 }
 
 function die() {
@@ -97,17 +104,43 @@ function loop() {
   updateTerrain(player.x, player.z);
   updateVegetation(player.x, player.z);
   updateWater(dt);
+  updateAmbience(dt);
   composer.render();
   stats && stats.end();
 }
 
+// Finns en sparning visas Fortsätt-knappen
+if (hasSave()) {
+  $('continuebtn').style.display = 'inline-block';
+  $('startbtn').textContent = 'Börja om från början';
+}
+
 $('startbtn').onclick = () => {
+  clearSave();
+  initAudio();
   $('start').style.display = 'none';
   S.started = true;
   drawHotbar(); recolorGround(); treeSeasonColors(); spawnWild(); rollWeather(); newDay();
   setLakeWinter(isWinter()); setSeasonGrade(seasonIdx());
   S.day = 1; trader.active = true; // handlaren är där dag 1
   msg('Välkommen till Tranerås! Hugg träd, gräv åkrar och överlev.');
+  renderer.domElement.requestPointerLock();
+};
+
+$('continuebtn').onclick = () => {
+  initAudio();
+  $('start').style.display = 'none';
+  S.started = true;
+  drawHotbar(); spawnWild();
+  if (loadGame()) {
+    msg('Välkommen tillbaka till Tranerås! Dag ' + S.day + '.');
+  } else {
+    // trasig sparning – starta nytt
+    recolorGround(); treeSeasonColors(); rollWeather(); newDay();
+    S.day = 1; trader.active = true;
+    msg('Sparningen kunde inte läsas – nytt spel startat.');
+  }
+  drawHotbar();
   renderer.domElement.requestPointerLock();
 };
 

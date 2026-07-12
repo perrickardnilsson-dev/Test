@@ -6,6 +6,7 @@ import { heightAt } from './terrain.js';
 import { box } from './farm.js';
 import { addLivestock } from './animals.js';
 import { $, msg, openPanelById } from './ui.js';
+import { sfx } from './audio.js';
 import * as THREE from 'three';
 
 // Handlarens bil
@@ -53,6 +54,7 @@ export function openShop() {
     if (S.money < d.price) return;
     S.money -= d.price;
     if (d.live) addLivestock(d.item); else give(d.item, d.item === 'pil' ? 5 : 1);
+    sfx('kop');
     msg('Köpte ' + d.item + (d.item === 'pil' ? ' ×5' : ''));
     openShop();
   });
@@ -66,5 +68,6 @@ export function sellItem(it, n) {
   S.inv[it] -= n;
   if (S.inv[it] <= 0) delete S.inv[it];
   S.money += SELL[it] * n;
+  sfx('kop');
   msg('Sålde ' + n + ' ' + it + ' för ' + SELL[it] * n + ' kr');
 }

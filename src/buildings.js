@@ -8,6 +8,7 @@ import { box } from './farm.js';
 import { makePlot } from './farming.js';
 import { player } from './player.js';
 import { $, msg, openPanelById, closePanels, drawHotbar } from './ui.js';
+import { sfx } from './audio.js';
 import { rayHit } from './raycast.js';
 
 export const builtThings = [];
@@ -86,6 +87,7 @@ export function placeBuild() {
   payCost(buildMode.cost);
   const ry = Math.round(player.yaw / (Math.PI / 2)) * (Math.PI / 2);
   makeBuilding(buildMode.id, ghost.position.x, ghost.position.z, ry);
+  sfx('bygg');
   msg(buildMode.name + ' byggt!');
   if (buildMode.id !== 'staket') { cancelBuild(); S.tool = 0; drawHotbar(); }
 }

@@ -48,3 +48,17 @@ scene.add(stars);
 
 export const moon = new THREE.Mesh(new THREE.SphereGeometry(9, 12, 12), new THREE.MeshBasicMaterial({ color: 0xdfe6f0, fog: false }));
 scene.add(moon);
+
+// Grafiknivå: skuggor av/på och upplösning på skuggkartan
+export function setShadows(enabled, size) {
+  renderer.shadowMap.enabled = enabled;
+  sun.castShadow = enabled;
+  if (size) {
+    sun.shadow.mapSize.set(size, size);
+    if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; }
+  }
+  scene.traverse(o => {
+    if (!o.material) return;
+    (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { m.needsUpdate = true; });
+  });
+}
