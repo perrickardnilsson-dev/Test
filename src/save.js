@@ -15,7 +15,9 @@ import { setLakeWinter } from './water.js';
 import { setSeasonGrade } from './post.js';
 import { seasonIdx, isWinter } from './state.js';
 
-const KEY = 'traneras-save-v1';
+// v3: världen lades om efter verklighetens geografi (sjön 400 m NV m.m.)
+// – äldre sparningar har ogiltiga träd-index och ignoreras.
+const KEY = 'traneras-save-v3';
 
 export function hasSave() {
   try { return !!localStorage.getItem(KEY); } catch { return false; }

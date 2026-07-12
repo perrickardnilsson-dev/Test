@@ -2,21 +2,23 @@
 // vatten och vassen. Höjdfunktionen heightAt är spelets facit och är
 // oförändrad från prototypen.
 import * as THREE from 'three';
-import { clamp, lerp, rand, sstep, vnoise } from './utils.js';
-import { W, LAKE, WATER_Y, YARD, ROAD_Z, ROAD_W } from './config.js';
+import { clamp, lerp, rand, sstep } from './utils.js';
+import { W, LAKE, WATER_Y, YARD, ROAD_W } from './config.js';
+import { baseHeight, roadDist } from './worlddata.js';
 import { seasonIdx } from './state.js';
 import { scene } from './scene.js';
 import { terrainMaterial, setSeasonUniforms } from './terrain-material.js';
 import { applyWindSway } from './wind.js';
 
+// Terränghöjd: bas (kartdata eller procedurell, med Skärsjön och gårdstunet)
+// + Traneråsvägen som planar ut terrängen längs sin kurva.
 export function heightAt(x, z) {
-  let h = 2.5 + vnoise(x * 0.012 + 13, z * 0.012 + 7) * 7 + vnoise(x * 0.05, z * 0.05) * 1.4;
-  const d = Math.hypot(x - LAKE.x, z - LAKE.z);
-  if (d < LAKE.r + 30) { const t = sstep(clamp((LAKE.r + 30 - d) / 30, 0, 1)); h = lerp(h, -1.6, t); }
-  const dy = Math.hypot(x - YARD.x, z - YARD.z);
-  if (dy < YARD.r + 14) { const t = sstep(clamp((YARD.r + 14 - dy) / 14, 0, 1)); h = lerp(h, 3.0, t); }
-  const dz = Math.abs(z - ROAD_Z);
-  if (dz < ROAD_W + 8) { const t = sstep(clamp((ROAD_W + 8 - dz) / 8, 0, 1)); h = lerp(h, 2.9, t); }
+  let h = baseHeight(x, z);
+  const rd = roadDist(x, z);
+  if (rd.d < ROAD_W + 8) {
+    const t = sstep(clamp((ROAD_W + 8 - rd.d) / 8, 0, 1));
+    h = lerp(h, baseHeight(rd.px, rd.pz), t * 0.95);
+  }
   return h;
 }
 
@@ -31,8 +33,8 @@ function normalAt(x, z, out) {
 }
 
 // ===== Chunk/LOD =====
-const GRID = 8;                    // 8×8 chunkar över 400×400 m
-const CHUNK = W / GRID;            // 50 m
+const GRID = Math.round(W / 50);   // ~50 m per chunk
+const CHUNK = W / GRID;
 const LOD_SEGS = [48, 16, 6];      // segment per chunk-sida, nära → långt
 const SKIRT = 4;                   // kjol som döljer springor mellan LOD-nivåer
 
@@ -124,8 +126,9 @@ export function recolorGround() {
   const im = new THREE.InstancedMesh(g, m, 260);
   const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), V = new THREE.Vector3();
   let n = 0;
-  for (let i = 0; i < 800 && n < 260; i++) {
-    const a = rand(0, Math.PI * 2), rr = LAKE.r + rand(-6, 3);
+  // strandlinjen är oregelbunden – sök i en bred ring och filtrera på höjd
+  for (let i = 0; i < 4000 && n < 260; i++) {
+    const a = rand(0, Math.PI * 2), rr = rand(LAKE.r * 0.65, LAKE.r * 1.35);
     const x = LAKE.x + Math.cos(a) * rr, z = LAKE.z + Math.sin(a) * rr, h = heightAt(x, z);
     if (h > WATER_Y - 0.7 && h < WATER_Y + 0.4) {
       M.compose(V.set(x, h + 0.7, z), Q.setFromEuler(new THREE.Euler(rand(-.1, .1), rand(0, 6), rand(-.1, .1))), new THREE.Vector3(1, rand(.7, 1.3), 1));

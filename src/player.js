@@ -25,7 +25,7 @@ export function updatePlayer(dt) {
   player.x = clamp(player.x, -W / 2 + 3, W / 2 - 3);
   player.z = clamp(player.z, -W / 2 + 3, W / 2 - 3);
   let gy = heightAt(player.x, player.z);
-  const inLake = Math.hypot(player.x - LAKE.x, player.z - LAKE.z) < LAKE.r + 15;
+  const inLake = Math.hypot(player.x - LAKE.x, player.z - LAKE.z) < LAKE.r * 1.3 + 15;
   if (inLake && gy < WATER_Y) {
     if (isWinter()) gy = WATER_Y + 0.03;          // gå på isen
     else gy = Math.max(gy, WATER_Y - 1.1);        // vada

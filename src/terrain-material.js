@@ -5,19 +5,26 @@
 // geometri. Texturer laddas från /textures/ (Poly Haven via `npm run setup`);
 // saknas de används procedurella reservtexturer.
 import * as THREE from 'three';
-import { W, LAKE, WATER_Y, YARD, ROAD_Z, ROAD_W } from './config.js';
-import { vnoise } from './utils.js';
+import { W, WATER_Y, YARD, ROAD_W } from './config.js';
+import { roadDist, lakeNearFactor } from './worlddata.js';
+import { clamp, vnoise } from './utils.js';
 import { getTextureSet } from './textures.js';
 
-// Skogsbruset bakas till en textur så att markens skogspartier exakt matchar
-// trädplaceringens gläntor (JS-flyttal ≠ GPU-flyttal för stora sin-argument).
+// Splatmaskerna bakas till en textur: R = skogsbrus (matchar trädens gläntor
+// exakt – JS-flyttal ≠ GPU-flyttal för stora sin-argument), G = Traneråsvägen
+// (godtycklig kurva, även verklig kartdata), B = närhet till Skärsjöns
+// oregelbundna strandlinje.
 function makeSplatNoise() {
   const N = 512, data = new Uint8Array(N * N * 4);
+  const smooth = (a, b, v) => { const t = clamp((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
   for (let iz = 0; iz < N; iz++) {
     for (let ix = 0; ix < N; ix++) {
       const x = -W / 2 + (ix / (N - 1)) * W, z = -W / 2 + (iz / (N - 1)) * W;
-      data[(iz * N + ix) * 4] = vnoise(x * 0.02 + 50, z * 0.02 + 50) * 255;
-      data[(iz * N + ix) * 4 + 3] = 255;
+      const i = (iz * N + ix) * 4;
+      data[i] = vnoise(x * 0.02 + 50, z * 0.02 + 50) * 255;
+      data[i + 1] = (1 - smooth(ROAD_W * 0.4, ROAD_W * 0.62, roadDist(x, z).d)) * 255;
+      data[i + 2] = lakeNearFactor(x, z) * 255;
+      data[i + 3] = 255;
     }
   }
   const t = new THREE.DataTexture(data, N, N, THREE.RGBAFormat);
@@ -48,12 +55,8 @@ export function setSeasonUniforms(autumn, snow) {
 }
 
 const glslConsts = `
-const float T_WATER_Y = float(${WATER_Y});
-const vec2 T_LAKE = vec2(${LAKE.x.toFixed(1)}, ${LAKE.z.toFixed(1)});
-const float T_LAKE_R = float(${LAKE.r.toFixed(1)});
+const float T_WATER_Y = float(${WATER_Y.toFixed(3)});
 const float T_YARD_R = float(${YARD.r.toFixed(1)});
-const float T_ROAD_Z = float(${ROAD_Z.toFixed(1)});
-const float T_ROAD_W = float(${ROAD_W.toFixed(1)});
 const float T_W = float(${W.toFixed(1)});
 `;
 
@@ -86,14 +89,15 @@ ${glslConsts}
     vec2 tWuv = vWPos.xz;
     float tHgt = vWPos.y;
     float tSlope = 1.0 - clamp(normalize(vWNorm).y, 0.0, 1.0);
-    float tForestNoise = texture2D(uSplatNoise, (tWuv + T_W * 0.5) / T_W).r;
-    float tDLake = distance(tWuv, T_LAKE);
+    vec3 tSplatN = texture2D(uSplatNoise, (tWuv + T_W * 0.5) / T_W).rgb;
+    float tForestNoise = tSplatN.r;
     float tDYard = length(tWuv);
 
-    // Splatvikter – samma regler som prototypens markfärger
-    float tWRoad = 1.0 - smoothstep(T_ROAD_W * 0.4, T_ROAD_W * 0.62, abs(vWPos.z - T_ROAD_Z));
+    // Splatvikter – samma regler som prototypens markfärger; väg och strand
+    // kommer ur den bakade masken (kurvig väg, oregelbunden strandlinje)
+    float tWRoad = tSplatN.g;
     float tWSand = (1.0 - smoothstep(T_WATER_Y + 0.1, T_WATER_Y + 0.9, tHgt))
-                 * (1.0 - smoothstep(T_LAKE_R + 30.0, T_LAKE_R + 38.0, tDLake));
+                 * clamp(tSplatN.b * 1.4, 0.0, 1.0);
     float tWRock = clamp(smoothstep(0.22, 0.42, tSlope) + smoothstep(9.0, 10.5, tHgt), 0.0, 1.0);
     float tWForest = smoothstep(0.30, 0.42, tForestNoise) * smoothstep(T_YARD_R * 0.8, T_YARD_R + 2.0, tDYard);
 

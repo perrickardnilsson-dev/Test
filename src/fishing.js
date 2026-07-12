@@ -4,6 +4,7 @@ import { rand } from './utils.js';
 import { LAKE, WATER_Y } from './config.js';
 import { S, give, isWinter } from './state.js';
 import { scene, camera } from './scene.js';
+import { heightAt } from './terrain.js';
 import { player } from './player.js';
 import { $, msg } from './ui.js';
 import { sfx } from './audio.js';
@@ -13,12 +14,13 @@ let fishing = null; // {state,bobber,t,window}
 export function doFish() {
   const dLake = Math.hypot(player.x - LAKE.x, player.z - LAKE.z);
   if (!fishing) {
-    if (dLake > LAKE.r + 8) { msg('Gå till Skärsjön för att fiska.'); return; }
+    if (dLake > LAKE.r * 1.3 + 15) { msg('Gå till Skärsjön för att fiska.'); return; }
     const dir = new THREE.Vector3();
     camera.getWorldDirection(dir);
     const pt = camera.position.clone().addScaledVector(dir, 8);
     pt.y = WATER_Y + 0.05;
-    if (Math.hypot(pt.x - LAKE.x, pt.z - LAKE.z) > LAKE.r + 4) { msg('Sikta ut över vattnet.'); return; }
+    // strandlinjen är oregelbunden – kolla att punkten faktiskt är över vatten
+    if (heightAt(pt.x, pt.z) > WATER_Y - 0.1) { msg('Sikta ut över vattnet.'); return; }
     const b = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), new THREE.MeshLambertMaterial({ color: 0xc03828 }));
     b.position.copy(pt);
     scene.add(b);
@@ -50,7 +52,7 @@ export function updateFishing(dt) {
     fishing.window -= dt;
     if (fishing.window <= 0) { $('napp').style.display = 'none'; scene.remove(fishing.bobber); fishing = null; msg('Fisken slank iväg...'); }
   }
-  if (fishing && Math.hypot(player.x - LAKE.x, player.z - LAKE.z) > LAKE.r + 20) {
+  if (fishing && Math.hypot(player.x - LAKE.x, player.z - LAKE.z) > LAKE.r * 1.3 + 25) {
     scene.remove(fishing.bobber);
     fishing = null;
     $('napp').style.display = 'none';

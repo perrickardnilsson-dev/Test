@@ -44,7 +44,7 @@ export const house = new THREE.Group();
 // Bryggan vid Skärsjön
 {
   const dir = new THREE.Vector2(YARD.x - LAKE.x, YARD.z - LAKE.z).normalize();
-  let rr = LAKE.r + 20;
+  let rr = LAKE.r * 1.3 + 15;
   while (heightAt(LAKE.x + dir.x * rr, LAKE.z + dir.y * rr) > WATER_Y && rr > 10) rr -= 1;
   const sx = LAKE.x + dir.x * (rr + 3), sz = LAKE.z + dir.y * (rr + 3);
   const dock = new THREE.Group();

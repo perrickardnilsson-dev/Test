@@ -7,7 +7,9 @@ import { LAKE, WATER_Y } from './config.js';
 import { scene, sun } from './scene.js';
 import { makeNormalNoiseTexture } from './fallback-textures.js';
 
-const geo = new THREE.PlaneGeometry(220, 220);
+// Planet ska täcka sjön även när strandlinjen kommer från verklig kartdata
+const LAKE_PLANE = Math.max(220, LAKE.plane ?? LAKE.r * 2.9);
+const geo = new THREE.PlaneGeometry(LAKE_PLANE, LAKE_PLANE);
 const waterNormals = makeNormalNoiseTexture(10, 8);
 
 function buildWater(texSize) {

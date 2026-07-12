@@ -7,7 +7,8 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { rand, vnoise, mulberry32 } from './utils.js';
-import { W, WATER_Y, YARD, ROAD_Z, ROAD_W } from './config.js';
+import { W, WATER_Y, YARD, ROAD_W } from './config.js';
+import { roadDist } from './worlddata.js';
 import { seasonIdx } from './state.js';
 import { scene } from './scene.js';
 import { heightAt } from './terrain.js';
@@ -202,7 +203,7 @@ function okTreeSpot(x, z) {
   const h = heightAt(x, z);
   if (h < WATER_Y + 0.6) return false;
   if (Math.hypot(x - YARD.x, z - YARD.z) < YARD.r + 3) return false;
-  if (Math.abs(z - ROAD_Z) < ROAD_W + 2) return false;
+  if (roadDist(x, z).d < ROAD_W + 2) return false;
   if (vnoise(x * 0.02 + 50, z * 0.02 + 50) < 0.3) return false; // gläntor
   const cell = Math.round(x / 2.2) + ':' + Math.round(z / 2.2);
   if (usedCells.has(cell)) return false;
@@ -213,7 +214,7 @@ function okTreeSpot(x, z) {
 function placeTrees(count, hp) {
   const list = [];
   let tries = 0;
-  while (list.length < count && tries++ < 30000) {
+  while (list.length < count && tries++ < 80000) {
     const x = vrand(-W / 2 + 8, W / 2 - 8), z = vrand(-W / 2 + 8, W / 2 - 8);
     if (!okTreeSpot(x, z)) continue;
     list.push({ x, z, h: heightAt(x, z), s: vrand(0.8, 1.35), ry: vrand(0, Math.PI * 2), hp, alive: true });
@@ -224,13 +225,13 @@ function placeTrees(count, hp) {
 {
   const gran = granGeos(), tall = tallGeos(), bjork = bjorkGeos();
   const defs = {
-    gran: { count: 400, wood: 9, glbHeight: 7.2,
+    gran: { count: 1000, wood: 9, glbHeight: 7.2,
             highParts: [{ geo: gran.high.trunk, mat: granBarkMat }, { geo: gran.high.fol, mat: granFolMat, isFol: true }],
             lowParts: [{ geo: gran.low.trunk, mat: granBarkMat }, { geo: gran.low.fol, mat: granFolMat, isFol: true }] },
-    tall: { count: 220, wood: 11, glbHeight: 8.2,
+    tall: { count: 550, wood: 11, glbHeight: 8.2,
             highParts: [{ geo: tall.high.trunk, mat: tallBarkMat }, { geo: tall.high.fol, mat: tallFolMat, isFol: true }],
             lowParts: [{ geo: tall.low.trunk, mat: tallBarkMat }, { geo: tall.low.fol, mat: tallFolMat, isFol: true }] },
-    bjork: { count: 180, wood: 7, glbHeight: 6.8,
+    bjork: { count: 450, wood: 7, glbHeight: 6.8,
             highParts: [{ geo: bjork.high.trunk, mat: bjorkBarkMat }, { geo: bjork.high.fol, mat: bjorkFolMat, isFol: true }],
             lowParts: [{ geo: bjork.low.trunk, mat: bjorkBarkMat }, { geo: bjork.low.fol, mat: bjorkFolMat, isFol: true }] }
   };
@@ -245,9 +246,9 @@ function placeTrees(count, hp) {
 {
   const g = rockGeos();
   let tries = 0;
-  while (rocks.data.length < 70 && tries++ < 8000) {
+  while (rocks.data.length < 150 && tries++ < 20000) {
     const x = vrand(-W / 2 + 8, W / 2 - 8), z = vrand(-W / 2 + 8, W / 2 - 8), h = heightAt(x, z);
-    if (h < WATER_Y + 0.4 || Math.abs(z - ROAD_Z) < ROAD_W + 1) continue;
+    if (h < WATER_Y + 0.4 || roadDist(x, z).d < ROAD_W + 1) continue;
     if (Math.hypot(x - YARD.x, z - YARD.z) < 10) continue;
     const s = vrand(0.5, 1.6);
     rocks.data.push({ x, z, h: h + 0.25 * s, s, ry: vrand(0, Math.PI * 2), hp: 4, alive: true });

@@ -54,7 +54,9 @@ if (import.meta.env.DEV) {
   const { saveGame } = await import('./save.js');
   const { makeBuilding, builtThings } = await import('./buildings.js');
   const { settings, applyQuality } = await import('./settings.js');
-  window.__traneras = { S, newDay, recolorGround, treeSeasonColors, player, water, ice, sky, moonLight, setWeather, toolAction, interact, plots, trees, rocks, wild, livestock, addLivestock, loadedModels, treeRayTargets, rockRayTargets, vegFromHit, rayHit, camera, composer, renderer, scene, saveGame, makeBuilding, builtThings, settings, applyQuality };
+  const { LAKE, W, WATER_Y } = await import('./config.js');
+  const { usingRealMap, TRUCK_SPOT, roadDist } = await import('./worlddata.js');
+  window.__traneras = { S, newDay, recolorGround, treeSeasonColors, player, water, ice, sky, moonLight, setWeather, toolAction, interact, plots, trees, rocks, wild, livestock, addLivestock, loadedModels, treeRayTargets, rockRayTargets, vegFromHit, rayHit, camera, composer, renderer, scene, saveGame, makeBuilding, builtThings, settings, applyQuality, LAKE, W, WATER_Y, usingRealMap, TRUCK_SPOT, roadDist, heightAt };
 }
 
 function die() {

@@ -8,6 +8,7 @@ med sjön Skärsjön ca 400 m nordväst (56.3102N, 14.9395O).
 - `npm install` – installera beroenden
 - `npm run setup` – ladda ner PBR-texturer (CC0) från Poly Haven till `public/textures/`
 - `npm run setup:models` – instruktioner för GLTF-modeller + uppdatera `public/models/manifest.json`
+- `npm run setup:map` – hämta verklig höjddata + Skärsjön/Traneråsvägen (OSM) till `public/map/`
 - `npm run dev` – utvecklingsserver (Vite)
 - `npm run build` – produktionsbygge till `dist/`
 - `npm run preview` – servera produktionsbygget lokalt
@@ -52,8 +53,20 @@ med sjön Skärsjön ca 400 m nordväst (56.3102N, 14.9395O).
   sparning finns. Inställningsmeny på Esc (`settings.js`) med grafiknivåer
   låg/mellan/hög (pixelratio, skuggor, bloom, vattenreflektion, LOD-avstånd)
   och ljudvolym – valen sparas i localStorage.
-- **Alla etapper i PROMPT.md är klara.** Kvarvarande bonusidéer: verklig
-  höjddata från Lantmäteriet, SSAO/CSM som tillval, GLTF-modeller och Poly
+- **Alla etapper i PROMPT.md är klara.**
+- **Kartan är verklighetstrogen** (`worlddata.js`): gården i origo, norr = -z,
+  världen 720×720 m. `public/map/mapdata.json` (incheckad, byggd av
+  `npm run setup:map`) innehåller **verklig höjddata** för Traneråsvägen 201
+  (AWS/Mapzen öppna terrängtiles) – Skärsjön ligger där den ska mot nordväst
+  och strandlinjen kommer ur höjddatat (flodfyllning av den plana sjöytan).
+  Traneråsvägen är approximerad som kurvande grusväg i nord-sydlig riktning
+  förbi gårdens östsida; kör `npm run setup:map` på en dator med fri
+  internetåtkomst så hämtas sjöns och vägens exakta geometri från
+  OpenStreetMap (Overpass var blockerat i utvecklingsmiljön). Utan mapdata
+  används en procedurell approximation med samma väderstreck och avstånd.
+  OBS: regenererad mapdata ändrar trädplaceringen → gamla sparningar
+  (localStorage) blir ogiltiga vid nästa versionsbump av save-nyckeln.
+- Kvarvarande bonusidéer: SSAO/CSM som tillval, GLTF-modeller och Poly
   Haven-texturer via setup-skripten.
 
 ## Arkitektur (src/)
@@ -61,8 +74,9 @@ Modulerna bildar en acyklisk importkedja, från grund till topp:
 
 | Modul | Ansvar |
 |---|---|
-| `utils.js` | Matte-hjälpare och värdesbrus (`vnoise`) |
-| `config.js` | Alla konstanter: värld, verktyg, priser, fröer, byggnader |
+| `utils.js` | Matte-hjälpare, värdesbrus (`vnoise`), seedad slump |
+| `worlddata.js` | Världens layout (verklighetstrogen): höjdbas, sjö, väg; läser `/map/mapdata.json` |
+| `config.js` | Spelkonstanter: verktyg, priser, fröer, byggnader (re-exporterar världen) |
 | `state.js` | Speltillståndet `S`, årstidshjälpare, `give()` |
 | `scene.js` | Renderare, scen, kamera, ljus, stjärnor/måne/sol |
 | `terrain.js` | `heightAt()`, chunkad LOD-terräng (`updateTerrain`), vassen |

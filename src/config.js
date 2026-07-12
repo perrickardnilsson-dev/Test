@@ -1,9 +1,6 @@
-// Världens och spelets konstanter. Värden tagna rakt ur prototypen (facit).
-export const W = 400, SEG = 120;
-export const LAKE = { x: -90, z: -110, r: 55 };
-export const WATER_Y = 1.1;
-export const YARD = { x: 0, z: 0, r: 24 };
-export const ROAD_Z = 42, ROAD_W = 7;
+// Spelets konstanter. Spelvärden tagna rakt ur prototypen (facit);
+// världens layout (trogen den verkliga platsen) bor i worlddata.js.
+export { W, LAKE, WATER_Y, YARD, ROAD_W } from './worlddata.js';
 export const DAY_REAL = 480; // sek per speldygn
 export const SEASONS = ['Vår', 'Sommar', 'Höst', 'Vinter'];
 export const SEASON_DAYS = 4;

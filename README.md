@@ -8,11 +8,20 @@ skogen, fiska i Skärsjön, bygg ut gården – och överlev vintern i Blekinge.
 
 ```bash
 npm install
-npm run setup    # hämta PBR-texturer (CC0) från Poly Haven – valfritt men rekommenderat
-npm run dev      # utvecklingsserver – öppna adressen som visas
-npm run build    # produktionsbygge till dist/
-npm run preview  # servera produktionsbygget lokalt
+npm run setup      # hämta PBR-texturer (CC0) från Poly Haven – valfritt men rekommenderat
+npm run setup:map  # hämta verklig höjddata + Skärsjöns/Traneråsvägens geometri – valfritt
+npm run dev        # utvecklingsserver – öppna adressen som visas
+npm run build      # produktionsbygge till dist/
+npm run preview    # servera produktionsbygget lokalt
 ```
+
+Kartan följer den verkliga platsen: gården på Traneråsvägen 201 med Skärsjön
+mot nordväst och grusvägen förbi gårdens östsida. Verklig höjddata ingår
+(`public/map/mapdata.json`); `npm run setup:map` kan dessutom hämta sjöns och
+vägens exakta form från OpenStreetMap.
+
+Höjddata: [Mapzen/AWS Terrain Tiles](https://registry.opendata.aws/terrain-tiles/)
+(öppna data, bl.a. Copernicus EU-DEM). Sjö-/väggeometri: © OpenStreetMap-bidragsgivare.
 
 Utan `npm run setup` används procedurellt genererade reservtexturer, så spelet
 fungerar även offline. Vill du ha finare 3D-modeller (Quaternius, CC0) kör du

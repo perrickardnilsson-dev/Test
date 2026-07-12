@@ -1,5 +1,6 @@
 // Ekonomi: handlaren med sin bil, köp och sälj.
-import { BUY, SELL, ROAD_Z } from './config.js';
+import { BUY, SELL } from './config.js';
+import { TRUCK_SPOT } from './worlddata.js';
 import { S, give } from './state.js';
 import { scene } from './scene.js';
 import { heightAt } from './terrain.js';
@@ -22,8 +23,8 @@ export const truck = new THREE.Group();
     w.position.set(p[0], 0.42, p[1] * 0.95);
     truck.add(w);
   });
-  truck.position.set(26, heightAt(26, ROAD_Z), ROAD_Z);
-  truck.rotation.y = Math.PI / 2;
+  truck.position.set(TRUCK_SPOT.x, heightAt(TRUCK_SPOT.x, TRUCK_SPOT.z), TRUCK_SPOT.z);
+  truck.rotation.y = TRUCK_SPOT.ry;
   truck.visible = false;
   scene.add(truck);
 }
