@@ -67,10 +67,15 @@ med sjön Skärsjön ca 400 m nordväst (56.3102N, 14.9395O).
   OBS: regenererad mapdata ändrar trädplaceringen → gamla sparningar
   (localStorage) blir ogiltiga vid nästa versionsbump av save-nyckeln.
 - **Mobil/PWA**: touchkontroller (`touch.js` bygger överlägget, `touch-state.js`
-  håller tillståndet som player.js läser – inga importcykler) med virtuell
-  joystick (fullt utslag = spring), dra-för-att-titta och knappar för
-  använd/hoppa/E/Q/inventarie/inställningar. Byggs bara på enheter med grov
-  pekare; mobiler får grafiknivå Mellan som standard. Spelet är en PWA
+  håller tillståndet som player.js läser – inga importcykler) med egen
+  mobil-layout: virtuell joystick (fullt utslag = spring, knoppen blir grön),
+  dra-för-att-titta, stor Använd-knapp som visar aktuellt verktyg,
+  verktygsväljare i helskärm (🧰, med fröbyte) i stället för hotbaren, och en
+  kontextknapp som bara visas när något finns att göra och säger vad
+  ("Skörda potatis", "Sov", "Handla" – speglar HUD-prompten via
+  `updateTouchHud()` från hud.js). Hotbar och [E]-prompt döljs via
+  `body.touch`. Byggs bara på enheter med grov pekare; mobiler får
+  grafiknivå Mellan som standard. Spelet är en PWA
   (manifest + service worker med runtime-cache + ikoner via
   `scripts/make-icons.mjs`) och kan installeras från Safari/Chrome
   ("Lägg till på hemskärmen"). Vite kör `base: './'` och alla asset-sökvägar

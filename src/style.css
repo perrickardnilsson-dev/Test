@@ -45,16 +45,37 @@ canvas { display:block; }
 #tc { display:none; }
 #tc.tc-on { display:block; }
 #tc, #tc * { touch-action:none; -webkit-user-select:none; user-select:none; }
+body.touch #hotbar, body.touch #prompt { display:none !important; } /* ersätts av väljaren + kontextknappen */
 #tc-look { position:fixed; top:0; right:0; width:55%; height:100%; z-index:5; }
-#tc-stick { position:fixed; bottom:calc(24px + env(safe-area-inset-bottom)); left:calc(24px + env(safe-area-inset-left));
-  width:124px; height:124px; border-radius:50%; background:rgba(24,19,13,.35); border:2px solid rgba(190,160,110,.4); z-index:6; }
-#tc-knob { position:absolute; left:50%; top:50%; width:56px; height:56px; margin:-28px 0 0 -28px; border-radius:50%;
+#tc-stick { position:fixed; bottom:calc(22px + env(safe-area-inset-bottom)); left:calc(22px + env(safe-area-inset-left));
+  width:140px; height:140px; border-radius:50%; background:rgba(24,19,13,.35); border:2px solid rgba(190,160,110,.4); z-index:6; }
+#tc-knob { position:absolute; left:50%; top:50%; width:64px; height:64px; margin:-32px 0 0 -32px; border-radius:50%;
   background:rgba(207,174,114,.55); border:2px solid rgba(232,200,122,.8); pointer-events:none; }
+#tc-knob.tc-run { background:rgba(126,190,110,.6); border-color:#9fe08a; } /* fullt utslag = spring */
 #tc-buttons { position:fixed; bottom:calc(20px + env(safe-area-inset-bottom)); right:calc(16px + env(safe-area-inset-right));
-  display:grid; grid-template-columns:52px 76px; gap:10px; justify-items:center; align-items:center; z-index:6; }
-.tc-btn { width:52px; height:52px; border-radius:50%; background:rgba(24,19,13,.55); border:2px solid rgba(190,160,110,.5);
-  color:#f0e6ce; font-size:20px; display:flex; align-items:center; justify-content:center; }
-.tc-btn.tc-big { width:76px; height:76px; font-size:30px; background:rgba(70,55,30,.6); border-color:#cfae72; }
+  display:flex; align-items:flex-end; gap:12px; z-index:6; }
+.tc-btn { width:60px; height:60px; border-radius:50%; background:rgba(24,19,13,.55); border:2px solid rgba(190,160,110,.5);
+  color:#f0e6ce; font-size:24px; display:flex; align-items:center; justify-content:center; }
+.tc-btn.tc-big { width:92px; height:92px; font-size:40px; background:rgba(70,55,30,.65); border-color:#cfae72; }
+.tc-btn.tc-small { width:46px; height:46px; font-size:18px; }
+#tc-top { position:fixed; top:calc(122px + env(safe-area-inset-top)); right:calc(10px + env(safe-area-inset-right));
+  display:flex; flex-direction:column; gap:8px; z-index:6; }
+/* Kontextknappen: stor tydlig "gör det här"-pill ovanför Använd-knappen */
+#tc-ctx { position:fixed; bottom:calc(132px + env(safe-area-inset-bottom)); right:calc(16px + env(safe-area-inset-right));
+  max-width:46vw; padding:14px 22px; border-radius:30px; font-size:17px; font-family:Georgia,serif;
+  background:rgba(62,90,53,.85); border:2px solid #9db48f; color:#f0e6ce; z-index:7; }
+/* Verktygsväljaren: helskärmspanel med stora namngivna knappar */
+#tc-toolpanel { display:none; position:fixed; inset:0; z-index:30; background:rgba(6,10,8,.88);
+  padding:calc(14px + env(safe-area-inset-top)) 18px 14px; overflow-y:auto; border:none; border-radius:0; }
+#tc-toolpanel.tc-open { display:block; }
+.tc-tp-title { font-family:Georgia,serif; color:#cfae72; font-size:20px; text-align:center; margin-bottom:10px; }
+.tc-tp-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; max-width:560px; margin:0 auto; }
+.tc-tp-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+  padding:10px 6px; border-radius:10px; background:rgba(24,19,13,.85); border:2px solid rgba(190,160,110,.35);
+  color:#e8ddc8; font-size:13px; }
+.tc-tp-btn.tc-sel { border-color:#e8c87a; background:rgba(70,55,30,.9); }
+.tc-tp-ico { font-size:30px; }
+.tc-tp-wide { flex-direction:row; gap:10px; max-width:560px; margin:12px auto 0; width:100%; font-size:15px; padding:12px; }
 #tc-rotate { display:none; position:fixed; inset:0; z-index:40; background:rgba(6,10,8,.9); color:#e8ddc8;
   font-size:18px; align-items:center; justify-content:center; text-align:center; padding:20px; }
 @media (orientation: portrait) { #tc.tc-on #tc-rotate { display:flex; } }

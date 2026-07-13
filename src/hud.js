@@ -10,6 +10,7 @@ import { player } from './player.js';
 import { trader, truck } from './economy.js';
 import { livestock } from './animals.js';
 import { $ } from './ui.js';
+import { updateTouchHud } from './touch.js';
 
 export function updateHUD() {
   $('bhp').firstElementChild.style.width = S.hp + '%';
@@ -35,4 +36,5 @@ export function updateHUD() {
   }
   $('prompt').style.display = pr ? 'block' : 'none';
   $('prompt').textContent = pr;
+  updateTouchHud(pr); // mobilens kontextknapp + verktygsikon
 }
