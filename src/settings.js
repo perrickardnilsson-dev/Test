@@ -9,8 +9,11 @@ import { saveGame } from './save.js';
 import { S } from './state.js';
 import { $, msg, openPanelById, uiState, closePanels } from './ui.js';
 
+import { touch } from './touch-state.js';
+
 const KEY = 'traneras-settings-v1';
-export const settings = { quality: 'hog', volume: 0.7 };
+// mobiler får Mellan som standard – Hög är kalibrerad för laptop-GPU
+export const settings = { quality: touch.active ? 'mellan' : 'hog', volume: 0.7 };
 try { Object.assign(settings, JSON.parse(localStorage.getItem(KEY)) || {}); } catch { /* privat läge */ }
 
 function persist() {

@@ -18,7 +18,7 @@ export function getTextureSet(name) {
     onUpdate(cb) { subs.push(cb); }
   };
   for (const map of ['diff', 'nor', 'arm']) {
-    loader.load('/textures/' + name + '_' + map + '.jpg', tex => {
+    loader.load('textures/' + name + '_' + map + '.jpg', tex => {
       tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
       tex.anisotropy = 4;
       if (map === 'diff') tex.colorSpace = THREE.SRGBColorSpace;

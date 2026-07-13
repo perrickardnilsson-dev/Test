@@ -66,8 +66,22 @@ med sjön Skärsjön ca 400 m nordväst (56.3102N, 14.9395O).
   används en procedurell approximation med samma väderstreck och avstånd.
   OBS: regenererad mapdata ändrar trädplaceringen → gamla sparningar
   (localStorage) blir ogiltiga vid nästa versionsbump av save-nyckeln.
+- **Mobil/PWA**: touchkontroller (`touch.js` bygger överlägget, `touch-state.js`
+  håller tillståndet som player.js läser – inga importcykler) med virtuell
+  joystick (fullt utslag = spring), dra-för-att-titta och knappar för
+  använd/hoppa/E/Q/inventarie/inställningar. Byggs bara på enheter med grov
+  pekare; mobiler får grafiknivå Mellan som standard. Spelet är en PWA
+  (manifest + service worker med runtime-cache + ikoner via
+  `scripts/make-icons.mjs`) och kan installeras från Safari/Chrome
+  ("Lägg till på hemskärmen"). Vite kör `base: './'` och alla asset-sökvägar
+  är relativa så bygget fungerar på underadresser (GitHub Pages).
+  `.github/workflows/deploy.yml` publicerar till Pages (kräver
+  Settings → Pages → Source: GitHub Actions). OBS: rå touch-events används
+  (inte pointer-events) – pekarhändelser syntetiserade från touch gav
+  koordinatproblem.
 - Kvarvarande bonusidéer: SSAO/CSM som tillval, GLTF-modeller och Poly
-  Haven-texturer via setup-skripten.
+  Haven-texturer via setup-skripten, App Store-distribution via Capacitor
+  (touchkontrollerna återanvänds rakt av).
 
 ## Arkitektur (src/)
 Modulerna bildar en acyklisk importkedja, från grund till topp:
@@ -107,6 +121,8 @@ Modulerna bildar en acyklisk importkedja, från grund till topp:
 | `interactions.js` | Verktygsanvändning (vänsterklick) och interaktion (E) |
 | `hud.js` | Mätare, klocka, pengar, kontextprompten |
 | `input.js` | Tangentbord, mus, pekarlås, verktygsval |
+| `touch-state.js` | Touchstyrningens tillstånd (importfri, läses av player.js) |
+| `touch.js` | Touchöverlägget: joystick, titta-drag, knappar (mobil) |
 | `main.js` | Spel-loopen, startskärmen, döden, stats.js i dev-läge |
 
 I dev-läge finns `window.__traneras` med debughandtag (S, newDay, setWeather,

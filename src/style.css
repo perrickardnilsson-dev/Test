@@ -40,3 +40,35 @@ canvas { display:block; }
 #startbtn:hover, #continuebtn:hover { background:#84693e; }
 #continuebtn { background:#3e5a35; border-color:#9db48f; }
 #continuebtn:hover { background:#527347; }
+
+/* ===== Touchkontroller (mobil/surfplatta) ===== */
+#tc { display:none; }
+#tc.tc-on { display:block; }
+#tc, #tc * { touch-action:none; -webkit-user-select:none; user-select:none; }
+#tc-look { position:fixed; top:0; right:0; width:55%; height:100%; z-index:5; }
+#tc-stick { position:fixed; bottom:calc(24px + env(safe-area-inset-bottom)); left:calc(24px + env(safe-area-inset-left));
+  width:124px; height:124px; border-radius:50%; background:rgba(24,19,13,.35); border:2px solid rgba(190,160,110,.4); z-index:6; }
+#tc-knob { position:absolute; left:50%; top:50%; width:56px; height:56px; margin:-28px 0 0 -28px; border-radius:50%;
+  background:rgba(207,174,114,.55); border:2px solid rgba(232,200,122,.8); pointer-events:none; }
+#tc-buttons { position:fixed; bottom:calc(20px + env(safe-area-inset-bottom)); right:calc(16px + env(safe-area-inset-right));
+  display:grid; grid-template-columns:52px 76px; gap:10px; justify-items:center; align-items:center; z-index:6; }
+.tc-btn { width:52px; height:52px; border-radius:50%; background:rgba(24,19,13,.55); border:2px solid rgba(190,160,110,.5);
+  color:#f0e6ce; font-size:20px; display:flex; align-items:center; justify-content:center; }
+.tc-btn.tc-big { width:76px; height:76px; font-size:30px; background:rgba(70,55,30,.6); border-color:#cfae72; }
+#tc-rotate { display:none; position:fixed; inset:0; z-index:40; background:rgba(6,10,8,.9); color:#e8ddc8;
+  font-size:18px; align-items:center; justify-content:center; text-align:center; padding:20px; }
+@media (orientation: portrait) { #tc.tc-on #tc-rotate { display:flex; } }
+
+/* Kompaktare HUD på små skärmar */
+@media (max-width: 900px) {
+  #hud { top:8px; left:8px; padding:6px 10px; min-width:160px; }
+  #hud h1 { font-size:10px; }
+  #clockbox { top:8px; right:8px; padding:6px 10px; }
+  #clock { font-size:16px; }
+  #money { top:86px; right:8px; padding:5px 10px; font-size:13px; }
+  #hotbar { bottom:calc(8px + env(safe-area-inset-bottom)); gap:4px; left:44%; }
+  .slot { width:42px; height:42px; }
+  .slot .ico { font-size:16px; } .slot .k { font-size:8px; }
+  #msgs { bottom:110px; }
+  #prompt { bottom:66px; }
+}

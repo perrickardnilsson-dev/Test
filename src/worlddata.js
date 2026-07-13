@@ -11,7 +11,7 @@ import { clamp, lerp, sstep, vnoise } from './utils.js';
 
 let map = null;
 try {
-  const r = await fetch('/map/mapdata.json');
+  const r = await fetch('map/mapdata.json');
   if (r.ok) map = await r.json();
 } catch { /* ingen kartdata – procedurell värld */ }
 

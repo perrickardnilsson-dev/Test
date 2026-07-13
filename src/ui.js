@@ -3,6 +3,7 @@ import { TOOLS, FOOD, SEED2CROP } from './config.js';
 import { S, give } from './state.js';
 import { renderer } from './scene.js';
 import { sfx } from './audio.js';
+import { touch } from './touch-state.js';
 
 export const $ = id => document.getElementById(id);
 export const uiState = { open: null }; // vilken bigpanel som är öppen
@@ -46,7 +47,7 @@ export function openPanelById(id) {
 export function closePanels() {
   ['p-inv', 'p-shop', 'p-build', 'p-settings'].forEach(i => $(i).style.display = 'none');
   uiState.open = null;
-  if (S.started && !S.dead) renderer.domElement.requestPointerLock();
+  if (S.started && !S.dead && !touch.active) renderer.domElement.requestPointerLock();
 }
 
 export function refreshInv() {

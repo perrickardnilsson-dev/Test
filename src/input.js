@@ -7,6 +7,7 @@ import { interact, toolAction, cycleSeed } from './interactions.js';
 import { clamp } from './utils.js';
 import { togglePanel, closePanels, drawHotbar, onToolSelect, uiState } from './ui.js';
 import { toggleSettings } from './settings.js';
+import { touch } from './touch-state.js';
 
 let locked = false;
 const cv = renderer.domElement;
@@ -20,7 +21,7 @@ export function selectTool(i) {
 onToolSelect(selectTool);
 
 export function initInput() {
-  cv.addEventListener('click', () => { if (!uiState.open && !S.dead && S.started) cv.requestPointerLock(); });
+  cv.addEventListener('click', () => { if (!uiState.open && !S.dead && S.started && !touch.active) cv.requestPointerLock(); });
   document.addEventListener('pointerlockchange', () => { locked = document.pointerLockElement === cv; });
   document.addEventListener('mousemove', e => {
     if (!locked) return;

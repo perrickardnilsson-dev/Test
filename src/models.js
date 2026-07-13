@@ -13,14 +13,14 @@ for (const n of NAMES) { models[n] = null; loadedModels[n] = false; }
 // glb-filer som finns – då slipper vi 404-brus för modeller som saknas.
 let available = [];
 try {
-  const r = await fetch('/models/manifest.json');
+  const r = await fetch('models/manifest.json');
   if (r.ok) available = await r.json();
 } catch { /* inga modeller */ }
 
 const loader = new GLTFLoader();
 await Promise.all(available.filter(n => NAMES.includes(n)).map(async name => {
   try {
-    const gltf = await loader.loadAsync('/models/' + name + '.glb');
+    const gltf = await loader.loadAsync('models/' + name + '.glb');
     models[name] = gltf.scene;
     loadedModels[name] = true;
   } catch { /* behåll procedurell modell */ }

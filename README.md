@@ -23,6 +23,16 @@ vägens exakta form från OpenStreetMap.
 Höjddata: [Mapzen/AWS Terrain Tiles](https://registry.opendata.aws/terrain-tiles/)
 (öppna data, bl.a. Copernicus EU-DEM). Sjö-/väggeometri: © OpenStreetMap-bidragsgivare.
 
+## Spela på mobilen (iPhone/iPad/Android)
+
+Spelet har touchkontroller (virtuell joystick, dra för att titta, knappar för
+verktyg och interaktion) och är en installerbar PWA. Publicera med GitHub
+Pages (repo-inställningar → Pages → Source: "GitHub Actions" – workflowen
+`deploy.yml` bygger och publicerar automatiskt), öppna adressen i Safari och
+välj **Dela → Lägg till på hemskärmen**. Spelet får egen ikon, kör i helskärm
+och fungerar offline. Vill du senare till App Store wrappar du `dist/` med
+Capacitor – kontrollerna återanvänds som de är.
+
 Utan `npm run setup` används procedurellt genererade reservtexturer, så spelet
 fungerar även offline. Vill du ha finare 3D-modeller (Quaternius, CC0) kör du
 `npm run setup:models` och följer instruktionerna.

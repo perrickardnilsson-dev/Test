@@ -24,18 +24,25 @@ import { applySettings } from './settings.js';
 import { $, msg, drawHotbar } from './ui.js';
 import { updateHUD } from './hud.js';
 import { initInput } from './input.js';
+import { initTouch, showTouchControls } from './touch.js';
 
 initInput();
+initTouch();
 applySettings();
+
+// PWA: offline-cache i produktionsbygget (installeras från Safari/Chrome)
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  navigator.serviceWorker.register(import.meta.env.BASE_URL + 'sw.js').catch(() => {});
+}
 
 // fps-mätare under utveckling (prestandakrav: 60 fps)
 let stats = null;
 if (import.meta.env.DEV) {
   const { default: Stats } = await import('stats.js');
   stats = new Stats();
-  stats.dom.style.left = 'auto';
-  stats.dom.style.right = '12px';
-  stats.dom.style.top = '160px';
+  // vänster sida, under HUD:en – höger sida är touchknapparnas yta
+  stats.dom.style.left = '12px';
+  stats.dom.style.top = '170px';
   document.body.appendChild(stats.dom);
 }
 
@@ -120,6 +127,7 @@ if (hasSave()) {
 $('startbtn').onclick = () => {
   clearSave();
   initAudio();
+  showTouchControls();
   $('start').style.display = 'none';
   S.started = true;
   drawHotbar(); recolorGround(); treeSeasonColors(); spawnWild(); rollWeather(); newDay();
@@ -131,6 +139,7 @@ $('startbtn').onclick = () => {
 
 $('continuebtn').onclick = () => {
   initAudio();
+  showTouchControls();
   $('start').style.display = 'none';
   S.started = true;
   drawHotbar(); spawnWild();
