@@ -26,11 +26,14 @@ Höjddata: [Mapzen/AWS Terrain Tiles](https://registry.opendata.aws/terrain-tile
 ## Spela på mobilen (iPhone/iPad/Android)
 
 Spelet har touchkontroller (virtuell joystick, dra för att titta, knappar för
-verktyg och interaktion) och är en installerbar PWA. Publicera med GitHub
-Pages (repo-inställningar → Pages → Source: "GitHub Actions" – workflowen
-`deploy.yml` bygger och publicerar automatiskt), öppna adressen i Safari och
-välj **Dela → Lägg till på hemskärmen**. Spelet får egen ikon, kör i helskärm
-och fungerar offline. Vill du senare till App Store wrappar du `dist/` med
+verktyg och interaktion) och är en installerbar PWA.
+
+**Spela direkt: https://perrickardnilsson-dev.github.io/Test/**
+
+Öppna adressen i Safari på din iPhone och välj **Dela → Lägg till på
+hemskärmen** – spelet får egen ikon, kör i helskärm och fungerar offline.
+Workflowen `deploy.yml` bygger och publicerar automatiskt till gh-pages-grenen
+vid varje push. Vill du senare till App Store wrappar du `dist/` med
 Capacitor – kontrollerna återanvänds som de är.
 
 Utan `npm run setup` används procedurellt genererade reservtexturer, så spelet

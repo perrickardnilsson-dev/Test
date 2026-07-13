@@ -1,6 +1,6 @@
-# Bygger spelet och publicerar till GitHub Pages.
-# configure-pages med enablement: true aktiverar Pages automatiskt
-# (Source: GitHub Actions) första gången workflowen körs.
+# Bygger spelet och publicerar till GitHub Pages via gh-pages-grenen
+# (Pages aktiverades automatiskt när grenen först pushades). I CI hämtas
+# dessutom Poly Haven-texturer och exakt sjö-/väggeometri från OSM.
 name: Publicera till GitHub Pages
 
 on:
@@ -9,41 +9,33 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: pages
   cancel-in-progress: true
 
 jobs:
-  build:
+  build-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
-        with:
-          enablement: true
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
       - run: npm ci
-      # Poly Haven-texturer och exakt sjö-/väggeometri från OSM – bygget
-      # klarar sig med reservtexturer om nedladdningen skulle fallera.
+      # Bygget klarar sig med reservtexturer om nedladdningen skulle fallera
       - run: npm run setup || true
       - run: npm run setup:map || true
       - run: npm run build
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Publicera dist till gh-pages
+        run: |
+          cd dist
+          touch .nojekyll
+          git init -b gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Publicera till GitHub Pages (${GITHUB_SHA::7})"
+          git push --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" gh-pages
