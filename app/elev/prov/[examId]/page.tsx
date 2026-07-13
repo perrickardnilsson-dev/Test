@@ -5,6 +5,31 @@ import { startAttempt } from "@/app/elev/actions";
 import type { Answer, Exam, QuestionType, StudentAnswer } from "@/lib/types";
 import { ExamRunner, type RunnerQuestion } from "./exam-runner";
 
+/**
+ * Deterministisk blandning utifrån ett frö (attemptId): samma elev får alltid
+ * samma ordning, även efter omladdning av sidan.
+ */
+function seededShuffle<T>(items: T[], seed: string): T[] {
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  const next = () => {
+    h += 0x6d2b79f5;
+    let t = h;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const a = [...items];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(next() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 export default async function TakeExamPage({
   params,
 }: {
@@ -54,19 +79,27 @@ export default async function TakeExamPage({
     { p_exam_id: examId },
   );
 
-  const questions = ((questionsData as
-    | {
-        exam_question_id: string;
-        ordning: number;
-        poang: number;
-        fragetyp: QuestionType;
-        fragetext: string;
-        alternativ: string[] | null;
-        bild_url: string | null;
-      }[]
-    | null) ?? []).map<RunnerQuestion>((q) => ({
+  let rawQuestions =
+    (questionsData as
+      | {
+          exam_question_id: string;
+          ordning: number;
+          poang: number;
+          fragetyp: QuestionType;
+          fragetext: string;
+          alternativ: string[] | null;
+          bild_url: string | null;
+        }[]
+      | null) ?? [];
+
+  // Slumpad frågeordning per elev (deterministisk utifrån försöket).
+  if (exam.slumpa_fragor) {
+    rawQuestions = seededShuffle(rawQuestions, attemptId);
+  }
+
+  const questions = rawQuestions.map<RunnerQuestion>((q, i) => ({
     examQuestionId: q.exam_question_id,
-    ordning: q.ordning,
+    ordning: exam.slumpa_fragor ? i + 1 : q.ordning,
     poang: q.poang,
     fragetyp: q.fragetyp,
     fragetext: q.fragetext,

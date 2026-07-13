@@ -125,6 +125,7 @@ export interface Exam {
   oppnar: string | null;
   stanger: string | null;
   status: ExamStatus;
+  slumpa_fragor: boolean;
   created_at: string;
 }
 

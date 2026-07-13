@@ -13,6 +13,7 @@ export async function updateExamSettings(
     tidsgrans_minuter: number | null;
     oppnar: string | null;
     stanger: string | null;
+    slumpa_fragor: boolean;
   },
 ) {
   const supabase = await createClient();
@@ -143,6 +144,7 @@ export async function duplicateExam(examId: string, targetClassId: string) {
       instruktioner: exam.instruktioner,
       visningslage: exam.visningslage,
       tidsgrans_minuter: exam.tidsgrans_minuter,
+      slumpa_fragor: exam.slumpa_fragor,
       oppnar: null,
       stanger: null,
       status: "utkast",

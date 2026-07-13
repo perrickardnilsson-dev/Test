@@ -2,7 +2,14 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCheck, Download, Loader2, Send, Sparkles } from "lucide-react";
+import {
+  CheckCheck,
+  Download,
+  EyeOff,
+  Loader2,
+  Send,
+  Sparkles,
+} from "lucide-react";
 import {
   Card,
   CardContent,
@@ -13,6 +20,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
 import { LevelBadge } from "@/components/subject-badge";
 import { QuestionView } from "@/components/questions/question-view";
@@ -54,6 +62,21 @@ export function RattningClient({
   const [gradingRunning, setGradingRunning] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [bulkApproving, setBulkApproving] = useState(false);
+  const [anonymous, setAnonymous] = useState(false);
+
+  // Stabila pseudonymer ("Elev 1", "Elev 2" …) oberoende av namnordning.
+  const pseudonyms = useMemo(() => {
+    const m = new Map<string, string>();
+    [...attempts]
+      .sort((a, b) => a.id.localeCompare(b.id))
+      .forEach((a, i) => m.set(a.id, `Elev ${i + 1}`));
+    return m;
+  }, [attempts]);
+
+  const displayName = (attempt: AttemptWithProfile) =>
+    anonymous
+      ? (pseudonyms.get(attempt.id) ?? "Elev")
+      : attempt.profiles.name;
 
   const answerByKey = useMemo(() => {
     const m = new Map<string, Answer>();
@@ -171,7 +194,12 @@ export function RattningClient({
             </span>
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer mr-2">
+            <EyeOff className="h-4 w-4" />
+            Anonymisera
+            <Switch checked={anonymous} onCheckedChange={setAnonymous} />
+          </label>
           <Button
             variant="outline"
             onClick={runAiGrading}
@@ -262,7 +290,7 @@ export function RattningClient({
                         >
                           <span>
                             <span className="font-medium text-foreground">
-                              {attempt.profiles.name}
+                              {displayName(attempt)}
                             </span>{" "}
                             – inget svar
                           </span>
@@ -291,7 +319,7 @@ export function RattningClient({
                         )}
                         grading={grading}
                         compact
-                        studentName={attempt.profiles.name}
+                        studentName={displayName(attempt)}
                       />
                     );
                   })}
@@ -311,8 +339,10 @@ export function RattningClient({
               <Card key={attempt.id}>
                 <CardHeader className="flex-row items-center justify-between">
                   <div>
-                    <CardTitle>{attempt.profiles.name}</CardTitle>
-                    <CardDescription>{attempt.profiles.email}</CardDescription>
+                    <CardTitle>{displayName(attempt)}</CardTitle>
+                    <CardDescription>
+                      {anonymous ? "dold e-post" : attempt.profiles.email}
+                    </CardDescription>
                   </div>
                   <div className="text-right">
                     <div className="text-lg font-bold">

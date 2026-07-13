@@ -40,6 +40,19 @@ samma eller annan klass (t.ex. parallellklass eller nästa läsår), samt
 CSV-export av resultat (Excel-vänlig med poäng per fråga, totalpoäng och
 betygsnivå per elev).
 
+**Anti-fusk och rättvis bedömning:** slumpad frågeordning per elev (varje elev
+får sin egen ordning, inställning per prov) och anonymiserad rättning (dölj
+elevnamn medan du rättar, växla med ett klick).
+
+**Utveckling över tid:** en utvecklingsvy per klass visar klassens resultat
+per arbetsområde (centralt innehåll) över alla rättade prov – svagaste
+områdena först – samt en matris med varje elevs resultat per prov i
+kronologisk ordning.
+
+**E-postinbjudningar:** om `RESEND_API_KEY` är satt skickas inbjudningsmejl
+automatiskt via [Resend](https://resend.com) när läraren bjuder in en elev;
+utan nyckel kopierar läraren inbjudningslänken manuellt som tidigare.
+
 ## Frågetyper
 
 - Flerval (ett rätt svar)
@@ -82,7 +95,8 @@ npm install
    (skapar tabeller, RLS-policyer, RPC:er och Storage-bucketen `np-pdfs`),
    följt av `supabase/migrations/0002_forbattringar.sql` (bildstöd i frågor,
    förlängd tid per elev, återöppning av försök och bucketen
-   `question-images`).
+   `question-images`) och `supabase/migrations/0003_slumpad_ordning.sql`
+   (slumpad frågeordning per elev).
 3. Kör `supabase/seed.sql` för att lägga in exempelfrågor i alla fyra ämnen.
 4. Under **Authentication → Providers** – aktivera e-post/lösenord. För enkel
    lokal testning kan du stänga av e-postbekräftelse.
@@ -106,6 +120,8 @@ cp .env.example .env.local
 | `SUPABASE_SERVICE_ROLE_KEY` | Service-role-nyckel (endast server) |
 | `ANTHROPIC_API_KEY` | Din Anthropic-nyckel |
 | `NEXT_PUBLIC_APP_URL` | Bas-URL för inbjudningslänkar |
+| `RESEND_API_KEY` | (Valfri) Resend-nyckel för att skicka inbjudningsmejl |
+| `EMAIL_FROM` | (Valfri) Avsändaradress, t.ex. `NO-prov <inbjudan@din-doman.se>` |
 
 ### 4. Starta
 

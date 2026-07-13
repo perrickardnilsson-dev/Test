@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { emailEnabled, sendInvitationEmail } from "@/lib/email";
 import type { Subject } from "@/lib/types";
 
 function generateClassCode(subject: Subject, arskurs: number): string {
@@ -71,8 +72,34 @@ export async function createInvitation(classId: string, email: string) {
     .single();
 
   if (error) return { error: error.message };
+
+  // Skicka mejl om e-post är konfigurerat, annars kopierar läraren länken.
+  let emailSent = false;
+  let emailError: string | undefined;
+  if (emailEnabled()) {
+    const { data: klass } = await supabase
+      .from("classes")
+      .select("name")
+      .eq("id", classId)
+      .single();
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const result = await sendInvitationEmail({
+      to: clean,
+      className: klass?.name ?? "din klass",
+      inviteUrl: `${baseUrl}/inbjudan/${data.token}`,
+    });
+    emailSent = result.sent;
+    emailError = result.error;
+  }
+
   revalidatePath(`/larare/klasser/${classId}`);
-  return { success: true, token: data.token as string };
+  return {
+    success: true,
+    token: data.token as string,
+    emailSent,
+    emailError,
+  };
 }
 
 export async function deleteInvitation(invitationId: string, classId: string) {

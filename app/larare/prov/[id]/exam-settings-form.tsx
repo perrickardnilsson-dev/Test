@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
 import type { Exam, ExamDisplayMode } from "@/lib/types";
 import { updateExamSettings } from "../actions";
@@ -45,6 +46,7 @@ export function ExamSettingsForm({ exam }: { exam: Exam }) {
   );
   const [oppnar, setOppnar] = useState(toLocalInput(exam.oppnar));
   const [stanger, setStanger] = useState(toLocalInput(exam.stanger));
+  const [slumpaFragor, setSlumpaFragor] = useState(exam.slumpa_fragor);
   const [saving, setSaving] = useState(false);
 
   async function onSave() {
@@ -56,6 +58,7 @@ export function ExamSettingsForm({ exam }: { exam: Exam }) {
       tidsgrans_minuter: tidsgrans ? Number(tidsgrans) : null,
       oppnar: oppnar ? new Date(oppnar).toISOString() : null,
       stanger: stanger ? new Date(stanger).toISOString() : null,
+      slumpa_fragor: slumpaFragor,
     });
     setSaving(false);
     if (result.error) {
@@ -133,6 +136,19 @@ export function ExamSettingsForm({ exam }: { exam: Exam }) {
             />
           </div>
         </div>
+
+        <label className="flex items-center justify-between rounded-lg border p-3 cursor-pointer">
+          <div>
+            <div className="text-sm font-medium">
+              Slumpa frågeordningen per elev
+            </div>
+            <div className="text-xs text-muted-foreground">
+              Varje elev får frågorna i sin egen ordning – försvårar fusk när
+              elever sitter bredvid varandra.
+            </div>
+          </div>
+          <Switch checked={slumpaFragor} onCheckedChange={setSlumpaFragor} />
+        </label>
 
         <div className="flex justify-end">
           <Button onClick={onSave} disabled={saving} variant="outline">

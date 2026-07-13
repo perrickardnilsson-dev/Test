@@ -49,11 +49,21 @@ export function InviteManager({
       });
       return;
     }
-    toast({
-      variant: "success",
-      title: "Inbjudan skapad",
-      description: "Kopiera länken och skicka till eleven.",
-    });
+    if (result.emailSent) {
+      toast({
+        variant: "success",
+        title: "Inbjudan skickad!",
+        description: "Eleven har fått ett mejl med inbjudningslänken.",
+      });
+    } else {
+      toast({
+        variant: "success",
+        title: "Inbjudan skapad",
+        description: result.emailError
+          ? `Mejlet kunde inte skickas (${result.emailError}) – kopiera länken manuellt.`
+          : "Kopiera länken och skicka till eleven.",
+      });
+    }
     setEmail("");
     router.refresh();
   }

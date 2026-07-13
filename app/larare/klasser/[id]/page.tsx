@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, TrendingUp } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import {
   Card,
@@ -78,9 +78,16 @@ export default async function ClassDetailPage({
           </div>
           <p className="text-muted-foreground">Årskurs {cls.arskurs}</p>
         </div>
-        <Button asChild>
-          <Link href={`/larare/prov/nytt?klass=${cls.id}`}>Skapa prov</Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="outline">
+            <Link href={`/larare/klasser/${cls.id}/utveckling`}>
+              <TrendingUp className="h-4 w-4" /> Utveckling
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link href={`/larare/prov/nytt?klass=${cls.id}`}>Skapa prov</Link>
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
