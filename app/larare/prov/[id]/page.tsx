@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ClipboardCheck } from "lucide-react";
+import { ArrowLeft, ClipboardCheck, MonitorPlay } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -94,11 +94,18 @@ export default async function ExamDetailPage({
           </div>
         </div>
         {exam.status !== "utkast" && (
-          <Button asChild>
-            <Link href={`/larare/prov/${exam.id}/rattning`}>
-              <ClipboardCheck className="h-4 w-4" /> Rättning &amp; resultat
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" asChild>
+              <Link href={`/larare/prov/${exam.id}/overvakning`}>
+                <MonitorPlay className="h-4 w-4" /> Pågående prov
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link href={`/larare/prov/${exam.id}/rattning`}>
+                <ClipboardCheck className="h-4 w-4" /> Rättning &amp; resultat
+              </Link>
+            </Button>
+          </div>
         )}
       </div>
 

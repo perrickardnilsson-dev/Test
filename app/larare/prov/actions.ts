@@ -140,6 +140,81 @@ export async function updateGrading(
   return { success: true };
 }
 
+/**
+ * Godkänner alla rättningar som väntar och har ett AI-förslag:
+ * AI-poängen blir lärarpoäng där läraren inte redan satt något.
+ */
+export async function approveAllPendingGradings(examId: string) {
+  const supabase = await createClient();
+
+  const { data: attempts } = await supabase
+    .from("attempts")
+    .select("id")
+    .eq("exam_id", examId);
+  const attemptIds = (attempts ?? []).map((a) => a.id);
+  if (attemptIds.length === 0) return { success: true, approved: 0 };
+
+  const { data: answers } = await supabase
+    .from("answers")
+    .select("id")
+    .in("attempt_id", attemptIds);
+  const answerIds = (answers ?? []).map((a) => a.id);
+  if (answerIds.length === 0) return { success: true, approved: 0 };
+
+  const { data: pending } = await supabase
+    .from("gradings")
+    .select("id, larare_poang, ai_forslag_poang")
+    .in("answer_id", answerIds)
+    .eq("status", "vantar")
+    .not("ai_forslag_poang", "is", null);
+
+  let approved = 0;
+  for (const g of pending ?? []) {
+    const { error } = await supabase
+      .from("gradings")
+      .update({
+        status: "godkand",
+        larare_poang: g.larare_poang ?? g.ai_forslag_poang,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", g.id);
+    if (!error) approved++;
+  }
+
+  revalidatePath(`/larare/prov/${examId}/rattning`);
+  return { success: true, approved };
+}
+
+/** Återöppnar ett inlämnat försök så att eleven kan fortsätta. */
+export async function reopenAttempt(examId: string, attemptId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("attempts")
+    .update({ inlamnad: null })
+    .eq("id", attemptId)
+    .eq("exam_id", examId);
+  if (error) return { error: error.message };
+  revalidatePath(`/larare/prov/${examId}/overvakning`);
+  return { success: true };
+}
+
+/** Ger en enskild elev förlängd tid (läggs på tidsgräns och stängningstid). */
+export async function extendAttemptTime(
+  examId: string,
+  attemptId: string,
+  extraMinuter: number,
+) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("attempts")
+    .update({ extra_minuter: Math.max(0, Math.round(extraMinuter)) })
+    .eq("id", attemptId)
+    .eq("exam_id", examId);
+  if (error) return { error: error.message };
+  revalidatePath(`/larare/prov/${examId}/overvakning`);
+  return { success: true };
+}
+
 export async function publishResults(examId: string) {
   const supabase = await createClient();
 

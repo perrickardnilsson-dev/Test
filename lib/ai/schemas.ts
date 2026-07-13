@@ -32,6 +32,7 @@ export const extractedQuestionSchema = z.object({
   arskurs: z.number().int().min(7).max(9),
   centralt_innehall: z.string(),
   poang: z.number().int().min(1),
+  bild_url: z.string().nullable().optional(),
 });
 
 export const extractionResultSchema = z.object({

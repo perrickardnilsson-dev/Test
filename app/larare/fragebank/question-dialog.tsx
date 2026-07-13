@@ -59,6 +59,7 @@ export function QuestionDialog({
           arskurs: question.arskurs,
           centralt_innehall: question.centralt_innehall,
           poang: question.poang,
+          bild_url: question.bild_url,
         }
       : emptyQuestion(),
   );

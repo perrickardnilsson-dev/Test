@@ -38,6 +38,7 @@ export async function saveQuestion(payload: unknown, id?: string) {
     kalla: q.kalla,
     source_document_id: q.source_document_id ?? null,
     poang: q.poang,
+    bild_url: q.bild_url ?? null,
   };
 
   if (id) {
@@ -106,6 +107,7 @@ export async function approveExtractedQuestions(
     kalla: "np" as const,
     source_document_id: documentId,
     poang: q.poang,
+    bild_url: q.bild_url ?? null,
   }));
 
   const { error } = await supabase.from("question_bank").insert(rows);

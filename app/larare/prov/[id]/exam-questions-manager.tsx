@@ -134,6 +134,7 @@ export function ExamQuestionsManager({
                           poang={q.poang}
                           centralt_innehall={q.centralt_innehall}
                           showFacit={false}
+                          bildUrl={q.bild_url}
                         />
                       </div>
                       <Button size="sm" onClick={() => onAdd(q.id)}>
@@ -166,6 +167,7 @@ export function ExamQuestionsManager({
                     bedomningsanvisning={eq.question_bank.bedomningsanvisning}
                     niva={eq.question_bank.niva}
                     centralt_innehall={eq.question_bank.centralt_innehall}
+                    bildUrl={eq.question_bank.bild_url}
                   />
                 </div>
                 <div className="flex flex-col items-end gap-2">

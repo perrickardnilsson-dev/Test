@@ -118,6 +118,7 @@ export function ReviewClient({
                     niva={row.q.niva}
                     poang={row.q.poang}
                     centralt_innehall={row.q.centralt_innehall}
+                    bildUrl={row.q.bild_url}
                   />
                 )}
                 <Separator />

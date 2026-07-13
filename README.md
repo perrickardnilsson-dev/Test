@@ -26,8 +26,14 @@ och Anthropic Claude. Deploy-redo för Vercel.
   sida, lärarens val), autosparande svar, tidsgräns med auto-inlämning.
 - **Fas 5 – Rättning & resultat:** Flerval rättas automatiskt; kortsvar och
   fritext får AI-förslag på poäng + nivå + motivering som läraren godkänner
-  eller justerar per svar. Resultat publiceras och blir synliga för eleverna.
-  Resultatöversikt per elev och per fråga (svåraste frågorna).
+  eller justerar per svar. Rättning kan göras per fråga eller per elev, och
+  alla AI-förslag kan godkännas i klump. Resultat publiceras och blir synliga
+  för eleverna. Resultatöversikt per elev och per fråga (svåraste frågorna).
+
+**Lärarverktyg under provet:** live-övervakning av pågående prov (vem skriver,
+hur långt de kommit, vem har lämnat in), möjlighet att återöppna ett inlämnat
+försök och att ge enskilda elever förlängd tid. Frågor kan dessutom ha bilder
+(diagram, figurer, foton) som visas i provläget och resultatvyerna.
 
 ## Frågetyper
 
@@ -68,7 +74,10 @@ npm install
 
 1. Skapa ett projekt på [supabase.com](https://supabase.com).
 2. Kör SQL:en i `supabase/migrations/0001_init.sql` i **SQL Editor**
-   (skapar tabeller, RLS-policyer, RPC:er och Storage-bucketen `np-pdfs`).
+   (skapar tabeller, RLS-policyer, RPC:er och Storage-bucketen `np-pdfs`),
+   följt av `supabase/migrations/0002_forbattringar.sql` (bildstöd i frågor,
+   förlängd tid per elev, återöppning av försök och bucketen
+   `question-images`).
 3. Kör `supabase/seed.sql` för att lägga in exempelfrågor i alla fyra ämnen.
 4. Under **Authentication → Providers** – aktivera e-post/lösenord. För enkel
    lokal testning kan du stänga av e-postbekräftelse.

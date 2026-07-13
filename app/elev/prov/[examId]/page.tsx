@@ -25,7 +25,6 @@ export default async function TakeExamPage({
 
   const now = Date.now();
   if (exam.oppnar && new Date(exam.oppnar).getTime() > now) redirect("/elev");
-  if (exam.stanger && new Date(exam.stanger).getTime() < now) redirect("/elev");
 
   const started = await startAttempt(examId);
   if (started.error || !started.attemptId) redirect("/elev");
@@ -38,6 +37,15 @@ export default async function TakeExamPage({
     .single();
 
   if (attempt?.inlamnad) {
+    redirect("/elev");
+  }
+
+  // Förlängd tid för eleven skjuter även fram provets stängning.
+  const extraMinutes = attempt?.extra_minuter ?? 0;
+  if (
+    exam.stanger &&
+    new Date(exam.stanger).getTime() + extraMinutes * 60000 < now
+  ) {
     redirect("/elev");
   }
 
@@ -54,6 +62,7 @@ export default async function TakeExamPage({
         fragetyp: QuestionType;
         fragetext: string;
         alternativ: string[] | null;
+        bild_url: string | null;
       }[]
     | null) ?? []).map<RunnerQuestion>((q) => ({
     examQuestionId: q.exam_question_id,
@@ -62,6 +71,7 @@ export default async function TakeExamPage({
     fragetyp: q.fragetyp,
     fragetext: q.fragetext,
     alternativ: q.alternativ,
+    bildUrl: q.bild_url,
   }));
 
   const { data: answersData } = await supabase
@@ -87,6 +97,7 @@ export default async function TakeExamPage({
       }}
       attemptId={attemptId}
       startedAt={attempt?.startad ?? new Date().toISOString()}
+      extraMinutes={extraMinutes}
       questions={questions}
       initialAnswers={initialAnswers}
     />

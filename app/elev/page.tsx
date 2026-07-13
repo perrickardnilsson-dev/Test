@@ -66,7 +66,11 @@ export default async function StudentDashboard() {
             const resultsReady = e.status === "rattat";
 
             const opensAt = e.oppnar ? new Date(e.oppnar).getTime() : null;
-            const closesAt = e.stanger ? new Date(e.stanger).getTime() : null;
+            // Förlängd tid för eleven skjuter fram stängningen.
+            const closesAt = e.stanger
+              ? new Date(e.stanger).getTime() +
+                (attempt?.extra_minuter ?? 0) * 60000
+              : null;
             const notOpenYet = opensAt != null && opensAt > now;
             const closed = closesAt != null && closesAt < now;
 

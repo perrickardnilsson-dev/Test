@@ -23,6 +23,7 @@ type ResultRow = {
   fragetyp: QuestionType;
   fragetext: string;
   alternativ: string[] | null;
+  bild_url: string | null;
   facit: Facit;
   svar: StudentAnswer | null;
   poang: number;
@@ -100,6 +101,7 @@ export default async function ResultsPage({
                       alternativ={r.alternativ}
                       facit={r.facit}
                       showFacit
+                      bildUrl={r.bild_url}
                     />
                   </div>
                   <div

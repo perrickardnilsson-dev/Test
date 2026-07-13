@@ -138,6 +138,7 @@ export async function POST(request: Request) {
         niva: q.niva,
         kalla: "ai_genererad" as const,
         poang: q.poang,
+        bild_url: null,
       }));
 
       if (rows.length > 0) {

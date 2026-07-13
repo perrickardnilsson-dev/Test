@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Send, Sparkles } from "lucide-react";
+import { CheckCheck, Loader2, Send, Sparkles } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { LevelBadge } from "@/components/subject-badge";
+import { QuestionView } from "@/components/questions/question-view";
 import { gradeLevelFromShare, questionTypeLabel } from "@/lib/constants";
 import { svarToText } from "@/lib/grading";
 import type {
@@ -50,6 +51,7 @@ export function RattningClient({
   const { toast } = useToast();
   const [gradingRunning, setGradingRunning] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [bulkApproving, setBulkApproving] = useState(false);
 
   const answerByKey = useMemo(() => {
     const m = new Map<string, Answer>();
@@ -102,6 +104,27 @@ export function RattningClient({
       setGradingRunning(false);
       router.refresh();
     }
+  }
+
+  async function onBulkApprove() {
+    setBulkApproving(true);
+    const { approveAllPendingGradings } = await import("../../actions");
+    const result = await approveAllPendingGradings(examId);
+    setBulkApproving(false);
+    if ("error" in result && result.error) {
+      toast({
+        variant: "destructive",
+        title: "Fel",
+        description: String(result.error),
+      });
+      return;
+    }
+    toast({
+      variant: "success",
+      title: "AI-förslag godkända",
+      description: `${result.approved ?? 0} svar godkändes. Justera enskilda svar vid behov.`,
+    });
+    router.refresh();
   }
 
   async function onPublish() {
@@ -162,6 +185,24 @@ export function RattningClient({
               </>
             )}
           </Button>
+          {pendingCount > 0 && (
+            <Button
+              variant="outline"
+              onClick={onBulkApprove}
+              disabled={bulkApproving}
+            >
+              {bulkApproving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Godkänner…
+                </>
+              ) : (
+                <>
+                  <CheckCheck className="h-4 w-4" /> Godkänn alla AI-förslag (
+                  {pendingCount})
+                </>
+              )}
+            </Button>
+          )}
           <Button
             onClick={onPublish}
             disabled={publishing || !hasAnyGrading}
@@ -172,11 +213,91 @@ export function RattningClient({
         </div>
       </div>
 
-      <Tabs defaultValue="rattning">
+      <Tabs defaultValue="fraga">
         <TabsList>
+          <TabsTrigger value="fraga">Rättning per fråga</TabsTrigger>
           <TabsTrigger value="rattning">Rättning per elev</TabsTrigger>
           <TabsTrigger value="resultat">Resultatöversikt</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="fraga" className="space-y-6 pt-4">
+          {examQuestions.map((eq) => {
+            const isAuto =
+              eq.question_bank.fragetyp === "flerval_ett" ||
+              eq.question_bank.fragetyp === "flerval_flera";
+            const answered = attempts.filter((a) =>
+              answerByKey.has(`${a.id}:${eq.id}`),
+            );
+            return (
+              <Card key={eq.id}>
+                <CardHeader>
+                  <CardTitle className="text-base font-medium">
+                    <QuestionView
+                      ordning={eq.ordning}
+                      fragetext={eq.question_bank.fragetext}
+                      fragetyp={eq.question_bank.fragetyp}
+                      alternativ={eq.question_bank.alternativ}
+                      facit={eq.question_bank.facit}
+                      bedomningsanvisning={eq.question_bank.bedomningsanvisning}
+                      niva={eq.question_bank.niva}
+                      poang={eq.poang}
+                      bildUrl={eq.question_bank.bild_url}
+                    />
+                  </CardTitle>
+                  <CardDescription>
+                    {answered.length} av {attempts.length} elever besvarade
+                    frågan
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {attempts.map((attempt) => {
+                    const ans = answerByKey.get(`${attempt.id}:${eq.id}`);
+                    if (!ans) {
+                      return (
+                        <div
+                          key={attempt.id}
+                          className="flex items-center justify-between rounded-lg border border-dashed p-3 text-sm text-muted-foreground"
+                        >
+                          <span>
+                            <span className="font-medium text-foreground">
+                              {attempt.profiles.name}
+                            </span>{" "}
+                            – inget svar
+                          </span>
+                          <span>0 / {eq.poang} p</span>
+                        </div>
+                      );
+                    }
+                    const grading = gradingByAnswer.get(ans.id);
+                    return (
+                      <GradingRow
+                        key={attempt.id}
+                        examId={examId}
+                        ordning={eq.ordning}
+                        maxPoang={eq.poang}
+                        isAuto={isAuto}
+                        fragetext={eq.question_bank.fragetext}
+                        fragetyp={eq.question_bank.fragetyp}
+                        alternativ={eq.question_bank.alternativ}
+                        facit={eq.question_bank.facit}
+                        bedomningsanvisning={
+                          eq.question_bank.bedomningsanvisning
+                        }
+                        studentText={svarToText(
+                          ans.svar as StudentAnswer | undefined,
+                          eq.question_bank.alternativ,
+                        )}
+                        grading={grading}
+                        compact
+                        studentName={attempt.profiles.name}
+                      />
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </TabsContent>
 
         <TabsContent value="rattning" className="space-y-6 pt-4">
           {attempts.map((attempt) => {
@@ -232,6 +353,7 @@ export function RattningClient({
                           eq.question_bank.alternativ,
                         )}
                         grading={grading}
+                        bildUrl={eq.question_bank.bild_url}
                       />
                     );
                   })}

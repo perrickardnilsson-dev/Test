@@ -1,6 +1,8 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { ImagePlus, Loader2, Plus, Trash2, X } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -48,6 +50,7 @@ export function emptyQuestion(): EditableQuestion {
     arskurs: 8,
     centralt_innehall: "",
     poang: 1,
+    bild_url: null,
   };
 }
 
@@ -58,6 +61,37 @@ export function QuestionEditor({
   value: EditableQuestion;
   onChange: (q: EditableQuestion) => void;
 }) {
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
+
+  async function uploadImage(file: File) {
+    setUploadingImage(true);
+    setImageError(null);
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      setUploadingImage(false);
+      return;
+    }
+    const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+    const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage
+      .from("question-images")
+      .upload(path, file, { contentType: file.type });
+    if (error) {
+      setImageError(error.message);
+      setUploadingImage(false);
+      return;
+    }
+    const { data } = supabase.storage
+      .from("question-images")
+      .getPublicUrl(path);
+    onChange({ ...value, bild_url: data.publicUrl });
+    setUploadingImage(false);
+  }
+
   const isFlerval =
     value.fragetyp === "flerval_ett" || value.fragetyp === "flerval_flera";
 
@@ -196,6 +230,57 @@ export function QuestionEditor({
           onChange={(e) => onChange({ ...value, fragetext: e.target.value })}
           rows={3}
         />
+      </div>
+
+      <div className="space-y-2">
+        <Label>Bild (valfritt)</Label>
+        {value.bild_url ? (
+          <div className="relative inline-block">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={value.bild_url}
+              alt="Frågebild"
+              className="max-h-56 rounded-lg border"
+            />
+            <Button
+              type="button"
+              variant="destructive"
+              size="icon"
+              className="absolute -right-2 -top-2 h-7 w-7 rounded-full"
+              onClick={() => onChange({ ...value, bild_url: null })}
+              title="Ta bort bild"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        ) : (
+          <label className="flex cursor-pointer items-center gap-2 rounded-md border border-dashed p-3 text-sm text-muted-foreground hover:bg-slate-50 w-fit">
+            {uploadingImage ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" /> Laddar upp…
+              </>
+            ) : (
+              <>
+                <ImagePlus className="h-4 w-4" /> Lägg till bild (diagram,
+                figur, foto)
+              </>
+            )}
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              className="hidden"
+              disabled={uploadingImage}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) void uploadImage(f);
+                e.target.value = "";
+              }}
+            />
+          </label>
+        )}
+        {imageError && (
+          <p className="text-xs text-destructive">{imageError}</p>
+        )}
       </div>
 
       {isFlerval && (

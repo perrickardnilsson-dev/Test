@@ -42,6 +42,7 @@ export type RunnerQuestion = {
   fragetyp: QuestionType;
   fragetext: string;
   alternativ: string[] | null;
+  bildUrl: string | null;
 };
 
 type SaveState = "idle" | "saving" | "saved";
@@ -50,6 +51,7 @@ export function ExamRunner({
   exam,
   attemptId,
   startedAt,
+  extraMinutes = 0,
   questions,
   initialAnswers,
 }: {
@@ -62,6 +64,7 @@ export function ExamRunner({
   };
   attemptId: string;
   startedAt: string;
+  extraMinutes?: number;
   questions: RunnerQuestion[];
   initialAnswers: Record<string, StudentAnswer>;
 }) {
@@ -80,7 +83,8 @@ export function ExamRunner({
   const submittedRef = useRef(false);
 
   const deadline = exam.tidsgrans_minuter
-    ? new Date(startedAt).getTime() + exam.tidsgrans_minuter * 60000
+    ? new Date(startedAt).getTime() +
+      (exam.tidsgrans_minuter + extraMinutes) * 60000
     : null;
 
   const doSubmit = useCallback(
@@ -295,6 +299,15 @@ function QuestionInput({
           </span>
         </div>
         <p className="text-lg font-medium">{question.fragetext}</p>
+
+        {question.bildUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={question.bildUrl}
+            alt="Bild till frågan"
+            className="max-h-80 rounded-lg border"
+          />
+        )}
 
         {question.fragetyp === "flerval_ett" && question.alternativ && (
           <RadioGroup

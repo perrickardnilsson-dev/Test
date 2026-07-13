@@ -25,6 +25,9 @@ export function GradingRow({
   bedomningsanvisning,
   studentText,
   grading,
+  compact = false,
+  studentName,
+  bildUrl,
 }: {
   examId: string;
   ordning: number;
@@ -37,6 +40,10 @@ export function GradingRow({
   bedomningsanvisning: string | null;
   studentText: string;
   grading: Grading | undefined;
+  /** Kompakt läge för "per fråga"-vyn: frågan visas inte i varje rad. */
+  compact?: boolean;
+  studentName?: string;
+  bildUrl?: string | null;
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -77,16 +84,22 @@ export function GradingRow({
     const correct = (grading?.auto_poang ?? 0) >= maxPoang;
     return (
       <div className="rounded-lg border p-4">
-        <QuestionView
-          ordning={ordning}
-          fragetext={fragetext}
-          fragetyp={fragetyp}
-          alternativ={alternativ}
-          facit={facit}
-          showFacit
-        />
+        {!compact && (
+          <QuestionView
+            ordning={ordning}
+            fragetext={fragetext}
+            fragetyp={fragetyp}
+            alternativ={alternativ}
+            facit={facit}
+            showFacit
+            bildUrl={bildUrl}
+          />
+        )}
         <div className="mt-3 flex items-center justify-between rounded-md bg-slate-50 p-3 text-sm">
           <span>
+            {studentName && (
+              <span className="font-semibold mr-2">{studentName}:</span>
+            )}
             Elevens svar:{" "}
             <span className="font-medium">{studentText || "(inget svar)"}</span>
           </span>
@@ -105,19 +118,22 @@ export function GradingRow({
 
   return (
     <div className="rounded-lg border p-4 space-y-3">
-      <QuestionView
-        ordning={ordning}
-        fragetext={fragetext}
-        fragetyp={fragetyp}
-        alternativ={alternativ}
-        facit={facit}
-        bedomningsanvisning={bedomningsanvisning}
-        showFacit
-      />
+      {!compact && (
+        <QuestionView
+          ordning={ordning}
+          fragetext={fragetext}
+          fragetyp={fragetyp}
+          alternativ={alternativ}
+          facit={facit}
+          bedomningsanvisning={bedomningsanvisning}
+          showFacit
+          bildUrl={bildUrl}
+        />
+      )}
 
       <div className="rounded-md bg-slate-50 p-3 text-sm">
         <div className="font-medium text-muted-foreground mb-1">
-          Elevens svar
+          {studentName ? `${studentName}s svar` : "Elevens svar"}
         </div>
         <p className="whitespace-pre-wrap">{studentText || "(inget svar)"}</p>
       </div>

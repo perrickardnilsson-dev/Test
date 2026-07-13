@@ -107,6 +107,7 @@ export function QuestionsClient({
                       niva={q.niva}
                       poang={q.poang}
                       centralt_innehall={q.centralt_innehall}
+                      bildUrl={q.bild_url}
                     />
                     <div className="mt-3 flex items-center gap-2 text-xs">
                       <SubjectBadge subject={q.amne as Subject} />

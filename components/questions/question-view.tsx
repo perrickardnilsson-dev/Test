@@ -16,6 +16,7 @@ export function QuestionView({
   centralt_innehall,
   showFacit = true,
   ordning,
+  bildUrl,
 }: {
   fragetext: string;
   fragetyp: QuestionType;
@@ -27,6 +28,7 @@ export function QuestionView({
   centralt_innehall?: string;
   showFacit?: boolean;
   ordning?: number;
+  bildUrl?: string | null;
 }) {
   const correctSingle =
     facit?.typ === "flerval_ett" ? facit.korrekt_index : null;
@@ -54,6 +56,15 @@ export function QuestionView({
         )}
         {fragetext}
       </p>
+
+      {bildUrl && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={bildUrl}
+          alt="Bild till frågan"
+          className="max-h-64 rounded-lg border"
+        />
+      )}
 
       {alternativ && alternativ.length > 0 && (
         <ul className="space-y-1">

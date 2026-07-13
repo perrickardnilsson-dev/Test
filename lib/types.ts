@@ -92,6 +92,7 @@ export interface ExtractedQuestion {
   arskurs: number;
   centralt_innehall: string;
   poang: number;
+  bild_url?: string | null;
 }
 
 export interface QuestionBankItem {
@@ -109,6 +110,7 @@ export interface QuestionBankItem {
   kalla: QuestionSource;
   source_document_id: string | null;
   poang: number;
+  bild_url: string | null;
   created_at: string;
 }
 
@@ -140,6 +142,7 @@ export interface Attempt {
   student_id: string;
   startad: string;
   inlamnad: string | null;
+  extra_minuter: number;
 }
 
 export interface Answer {
