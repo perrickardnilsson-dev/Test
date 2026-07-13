@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCheck, Loader2, Send, Sparkles } from "lucide-react";
+import { CheckCheck, Download, Loader2, Send, Sparkles } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -34,6 +34,7 @@ type AttemptWithProfile = Attempt & {
 
 export function RattningClient({
   examId,
+  examTitle,
   examStatus,
   examQuestions,
   attempts,
@@ -41,6 +42,7 @@ export function RattningClient({
   gradings,
 }: {
   examId: string;
+  examTitle: string;
   examStatus: string;
   examQuestions: EQWithBank[];
   attempts: AttemptWithProfile[];
@@ -365,6 +367,7 @@ export function RattningClient({
 
         <TabsContent value="resultat" className="pt-4">
           <ResultatOversikt
+            examTitle={examTitle}
             examQuestions={examQuestions}
             attempts={attempts}
             pointsFor={pointsFor}
@@ -377,11 +380,13 @@ export function RattningClient({
 }
 
 function ResultatOversikt({
+  examTitle,
   examQuestions,
   attempts,
   pointsFor,
   totalMax,
 }: {
+  examTitle: string;
   examQuestions: EQWithBank[];
   attempts: AttemptWithProfile[];
   pointsFor: (attemptId: string, eq: EQWithBank) => number;
@@ -391,6 +396,47 @@ function ResultatOversikt({
     const score = examQuestions.reduce((s, eq) => s + pointsFor(a.id, eq), 0);
     return { attempt: a, score };
   });
+
+  /** Excel-vänlig CSV: BOM, semikolon och decimalkomma (svensk lokal). */
+  function exportCsv() {
+    const num = (n: number) => String(n).replace(".", ",");
+    const esc = (s: string) => `"${s.replace(/"/g, '""')}"`;
+
+    const header = [
+      "Elev",
+      "E-post",
+      ...examQuestions.map((eq) => `Fråga ${eq.ordning} (${eq.poang}p)`),
+      "Totalt",
+      "Max",
+      "Andel %",
+      "Nivå",
+    ];
+
+    const rows = perStudent.map(({ attempt, score }) => {
+      const share = totalMax ? score / totalMax : 0;
+      return [
+        esc(attempt.profiles.name),
+        esc(attempt.profiles.email),
+        ...examQuestions.map((eq) => num(pointsFor(attempt.id, eq))),
+        num(score),
+        num(totalMax),
+        num(Math.round(share * 100)),
+        gradeLevelFromShare(share),
+      ];
+    });
+
+    const csv =
+      "\uFEFF" +
+      [header, ...rows].map((r) => r.join(";")).join("\r\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${examTitle.replace(/[^a-zA-Z0-9åäöÅÄÖ _-]/g, "")} - resultat.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
   const avg =
     perStudent.length > 0
       ? perStudent.reduce((s, p) => s + p.score, 0) / perStudent.length
@@ -405,7 +451,13 @@ function ResultatOversikt({
   const hardest = [...perQuestion].sort((a, b) => a.share - b.share);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <Button variant="outline" size="sm" onClick={exportCsv}>
+          <Download className="h-4 w-4" /> Exportera CSV (Excel)
+        </Button>
+      </div>
+      <div className="grid gap-6 lg:grid-cols-2">
       <Card>
         <CardHeader>
           <CardTitle>Per elev</CardTitle>
@@ -475,6 +527,7 @@ function ResultatOversikt({
           ))}
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

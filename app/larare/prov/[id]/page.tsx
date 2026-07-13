@@ -15,6 +15,7 @@ import type {
 import { ExamSettingsForm } from "./exam-settings-form";
 import { ExamQuestionsManager } from "./exam-questions-manager";
 import { PublishBar } from "./publish-bar";
+import { DuplicateExamDialog } from "./duplicate-exam-dialog";
 
 export type ExamQuestionWithBank = ExamQuestion & {
   question_bank: QuestionBankItem;
@@ -66,6 +67,14 @@ export default async function ExamDetailPage({
   const totalPoints = examQuestions.reduce((sum, eq) => sum + eq.poang, 0);
   const isDraft = exam.status === "utkast";
 
+  // Lärarens klasser för "Duplicera till klass".
+  const { data: classesData } = await supabase
+    .from("classes")
+    .select("id, name, amne, arskurs")
+    .order("created_at");
+  const teacherClasses =
+    (classesData as Pick<Class, "id" | "name" | "amne" | "arskurs">[]) ?? [];
+
   return (
     <div className="space-y-6 pb-24">
       <Link
@@ -93,20 +102,28 @@ export default async function ExamDetailPage({
             </span>
           </div>
         </div>
-        {exam.status !== "utkast" && (
-          <div className="flex gap-2">
-            <Button variant="outline" asChild>
-              <Link href={`/larare/prov/${exam.id}/overvakning`}>
-                <MonitorPlay className="h-4 w-4" /> Pågående prov
-              </Link>
-            </Button>
-            <Button asChild>
-              <Link href={`/larare/prov/${exam.id}/rattning`}>
-                <ClipboardCheck className="h-4 w-4" /> Rättning &amp; resultat
-              </Link>
-            </Button>
-          </div>
-        )}
+        <div className="flex gap-2">
+          <DuplicateExamDialog
+            examId={exam.id}
+            currentClassId={exam.class_id}
+            currentSubject={exam.classes.amne}
+            classes={teacherClasses}
+          />
+          {exam.status !== "utkast" && (
+            <>
+              <Button variant="outline" asChild>
+                <Link href={`/larare/prov/${exam.id}/overvakning`}>
+                  <MonitorPlay className="h-4 w-4" /> Pågående prov
+                </Link>
+              </Button>
+              <Button asChild>
+                <Link href={`/larare/prov/${exam.id}/rattning`}>
+                  <ClipboardCheck className="h-4 w-4" /> Rättning &amp; resultat
+                </Link>
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {isDraft && <ExamSettingsForm exam={exam} />}

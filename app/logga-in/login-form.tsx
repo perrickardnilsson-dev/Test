@@ -24,6 +24,7 @@ export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const invalidLink = searchParams.get("fel") === "ogiltig-lank";
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -68,6 +69,12 @@ export function LoginForm() {
       </CardHeader>
       <form onSubmit={onSubmit}>
         <CardContent className="space-y-4">
+          {invalidLink && (
+            <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+              Länken var ogiltig eller har gått ut. Logga in eller begär en ny
+              återställningslänk via &quot;Glömt lösenord?&quot;.
+            </p>
+          )}
           <div className="space-y-2">
             <Label htmlFor="email">E-post</Label>
             <Input
@@ -80,7 +87,15 @@ export function LoginForm() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Lösenord</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Lösenord</Label>
+              <Link
+                href="/glomt-losenord"
+                className="text-xs text-primary hover:underline"
+              >
+                Glömt lösenord?
+              </Link>
+            </div>
             <Input
               id="password"
               type="password"

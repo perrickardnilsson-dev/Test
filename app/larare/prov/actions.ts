@@ -108,6 +108,73 @@ export async function publishExam(examId: string) {
   return { success: true };
 }
 
+/**
+ * Duplicerar ett prov (med alla frågor) som nytt utkast, till samma eller en
+ * annan klass. Tidsfönstret nollställs eftersom det gäller ett nytt tillfälle.
+ */
+export async function duplicateExam(examId: string, targetClassId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Inte inloggad" };
+
+  const { data: exam } = await supabase
+    .from("exams")
+    .select("*")
+    .eq("id", examId)
+    .single();
+  if (!exam) return { error: "Provet hittades inte" };
+
+  const { data: targetClass } = await supabase
+    .from("classes")
+    .select("id")
+    .eq("id", targetClassId)
+    .single();
+  if (!targetClass) return { error: "Klassen hittades inte" };
+
+  const { data: newExam, error: examErr } = await supabase
+    .from("exams")
+    .insert({
+      class_id: targetClassId,
+      teacher_id: user.id,
+      titel:
+        targetClassId === exam.class_id ? `${exam.titel} (kopia)` : exam.titel,
+      instruktioner: exam.instruktioner,
+      visningslage: exam.visningslage,
+      tidsgrans_minuter: exam.tidsgrans_minuter,
+      oppnar: null,
+      stanger: null,
+      status: "utkast",
+    })
+    .select("id")
+    .single();
+  if (examErr || !newExam) {
+    return { error: examErr?.message ?? "Kunde inte skapa kopian" };
+  }
+
+  const { data: questions } = await supabase
+    .from("exam_questions")
+    .select("question_id, ordning, poang")
+    .eq("exam_id", examId)
+    .order("ordning");
+
+  if (questions && questions.length > 0) {
+    const { error: eqErr } = await supabase.from("exam_questions").insert(
+      questions.map((q) => ({
+        exam_id: newExam.id,
+        question_id: q.question_id,
+        ordning: q.ordning,
+        poang: q.poang,
+      })),
+    );
+    if (eqErr) return { error: eqErr.message };
+  }
+
+  revalidatePath("/larare/prov");
+  return { success: true, examId: newExam.id as string };
+}
+
 export async function deleteExam(examId: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("exams").delete().eq("id", examId);

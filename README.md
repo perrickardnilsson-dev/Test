@@ -35,6 +35,11 @@ hur långt de kommit, vem har lämnat in), möjlighet att återöppna ett inläm
 försök och att ge enskilda elever förlängd tid. Frågor kan dessutom ha bilder
 (diagram, figurer, foton) som visas i provläget och resultatvyerna.
 
+**Övrigt:** glömt lösenord-flöde via e-postlänk, duplicering av prov till
+samma eller annan klass (t.ex. parallellklass eller nästa läsår), samt
+CSV-export av resultat (Excel-vänlig med poäng per fråga, totalpoäng och
+betygsnivå per elev).
+
 ## Frågetyper
 
 - Flerval (ett rätt svar)
@@ -81,6 +86,10 @@ npm install
 3. Kör `supabase/seed.sql` för att lägga in exempelfrågor i alla fyra ämnen.
 4. Under **Authentication → Providers** – aktivera e-post/lösenord. För enkel
    lokal testning kan du stänga av e-postbekräftelse.
+5. Under **Authentication → URL Configuration** – sätt Site URL till din
+   app-URL och lägg till `https://din-app/auth/confirm` (och motsvarande för
+   `http://localhost:3000`) i Redirect URLs, så att
+   glömt lösenord-länkarna fungerar.
 
 ### 3. Miljövariabler
 

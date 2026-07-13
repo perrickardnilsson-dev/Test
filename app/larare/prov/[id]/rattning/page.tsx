@@ -97,6 +97,7 @@ export default async function RattningPage({
       ) : (
         <RattningClient
           examId={id}
+          examTitle={exam.titel}
           examStatus={exam.status}
           examQuestions={examQuestions}
           attempts={attempts}
