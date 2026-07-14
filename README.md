@@ -99,18 +99,18 @@ npm install
 ### 2. Skapa ett Supabase-projekt
 
 1. Skapa ett projekt på [supabase.com](https://supabase.com).
-2. Kör SQL:en i `supabase/migrations/0001_init.sql` i **SQL Editor**
-   (skapar tabeller, RLS-policyer, RPC:er och Storage-bucketen `np-pdfs`),
-   följt av `supabase/migrations/0002_forbattringar.sql` (bildstöd i frågor,
-   förlängd tid per elev, återöppning av försök och bucketen
-   `question-images`), `supabase/migrations/0003_slumpad_ordning.sql`
-   (slumpad frågeordning per elev), `supabase/migrations/0004_flikbyte.sql`
-   (flikbytesregistrering) och `supabase/migrations/0005_amneslag.sql`
-   (ämneslag med delad frågebank).
-3. Kör `supabase/seed.sql` för att lägga in exempelfrågor i alla fyra ämnen.
-4. Under **Authentication → Providers** – aktivera e-post/lösenord. För enkel
+2. Öppna **SQL Editor** i Supabase, klistra in hela innehållet i
+   **`supabase/setup.sql`** och kör. Det är allt! Filen skapar tabeller,
+   RLS-policyer, RPC:er, Storage-buckets och exempelfrågor i ett svep.
+   - Den är säker att köra flera gånger och fungerar även som uppgradering
+     om du redan kört äldre migrationer – allt skapas med
+     `if not exists`/`create or replace` och seed-frågorna läggs bara in en
+     gång.
+   - Vill du hellre köra stegvis finns samma innehåll uppdelat i
+     `supabase/migrations/0001`–`0005` + `supabase/seed.sql`.
+3. Under **Authentication → Providers** – aktivera e-post/lösenord. För enkel
    lokal testning kan du stänga av e-postbekräftelse.
-5. Under **Authentication → URL Configuration** – sätt Site URL till din
+4. Under **Authentication → URL Configuration** – sätt Site URL till din
    app-URL och lägg till `https://din-app/auth/confirm` (och motsvarande för
    `http://localhost:3000`) i Redirect URLs, så att
    glömt lösenord-länkarna fungerar.
