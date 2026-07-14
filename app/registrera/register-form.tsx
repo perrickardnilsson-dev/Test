@@ -42,10 +42,14 @@ export function RegisterForm() {
     setLoading(true);
     const supabase = createClient();
 
+    const next = role === "teacher" ? "/larare" : "/elev";
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { role, name } },
+      options: {
+        data: { role, name },
+        emailRedirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent(next)}`,
+      },
     });
 
     if (error || !data.user) {

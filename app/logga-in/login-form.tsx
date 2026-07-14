@@ -26,6 +26,7 @@ export function LoginForm() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const invalidLink = searchParams.get("fel") === "ogiltig-lank";
+  const expiredLink = searchParams.get("fel") === "utgangen-lank";
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -74,6 +75,14 @@ export function LoginForm() {
             <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
               Länken var ogiltig eller har gått ut. Logga in eller begär en ny
               återställningslänk via &quot;Glömt lösenord?&quot;.
+            </p>
+          )}
+          {expiredLink && (
+            <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+              Bekräftelselänken har gått ut eller redan använts (t.ex. om
+              mejlappen förhandsvisade länken). Registrera dig igen, eller stäng
+              av e-postbekräftelse i Supabase under Authentication → Providers
+              → Email om du testar lokalt.
             </p>
           )}
           <div className="space-y-2">
