@@ -63,6 +63,16 @@ export async function saveAnswer(
   return { success: true };
 }
 
+/** Registrerar att eleven lämnade provfliken (anti-fusk). */
+export async function reportFocusLoss(attemptId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("report_focus_loss", {
+    p_attempt_id: attemptId,
+  });
+  if (error) return { error: error.message };
+  return { success: true, count: (data as number) ?? 0 };
+}
+
 export async function submitAttempt(attemptId: string) {
   const supabase = await createClient();
   const { error } = await supabase

@@ -41,8 +41,16 @@ CSV-export av resultat (Excel-vänlig med poäng per fråga, totalpoäng och
 betygsnivå per elev).
 
 **Anti-fusk och rättvis bedömning:** slumpad frågeordning per elev (varje elev
-får sin egen ordning, inställning per prov) och anonymiserad rättning (dölj
-elevnamn medan du rättar, växla med ett klick).
+får sin egen ordning, inställning per prov), flikbytesvarning (eleven varnas
+när provfliken lämnas och antalet flikbyten syns i lärarens live-övervakning)
+och anonymiserad rättning (dölj elevnamn medan du rättar, växla med ett
+klick).
+
+**Ämneslag – delad frågebank:** lärare kan skapa eller gå med i ett ämneslag
+(via kod, som klasskoden fast för lärare) och markera egna frågor som delade.
+Delade frågor syns i kollegornas frågebank och kan användas i deras prov, men
+bara ägaren kan redigera eller ta bort dem. Delningen kan stängas av per fråga
+när som helst.
 
 **Utveckling över tid:** en utvecklingsvy per klass visar klassens resultat
 per arbetsområde (centralt innehåll) över alla rättade prov – svagaste
@@ -95,8 +103,10 @@ npm install
    (skapar tabeller, RLS-policyer, RPC:er och Storage-bucketen `np-pdfs`),
    följt av `supabase/migrations/0002_forbattringar.sql` (bildstöd i frågor,
    förlängd tid per elev, återöppning av försök och bucketen
-   `question-images`) och `supabase/migrations/0003_slumpad_ordning.sql`
-   (slumpad frågeordning per elev).
+   `question-images`), `supabase/migrations/0003_slumpad_ordning.sql`
+   (slumpad frågeordning per elev), `supabase/migrations/0004_flikbyte.sql`
+   (flikbytesregistrering) och `supabase/migrations/0005_amneslag.sql`
+   (ämneslag med delad frågebank).
 3. Kör `supabase/seed.sql` för att lägga in exempelfrågor i alla fyra ämnen.
 4. Under **Authentication → Providers** – aktivera e-post/lösenord. För enkel
    lokal testning kan du stänga av e-postbekräftelse.

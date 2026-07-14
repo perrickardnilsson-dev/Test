@@ -40,6 +40,15 @@ export interface Profile {
   role: Role;
   name: string;
   email: string;
+  school_id: string | null;
+  created_at: string;
+}
+
+/** Ämneslag/skola för delad frågebank mellan lärare. */
+export interface School {
+  id: string;
+  name: string;
+  school_code: string;
   created_at: string;
 }
 
@@ -111,6 +120,7 @@ export interface QuestionBankItem {
   source_document_id: string | null;
   poang: number;
   bild_url: string | null;
+  delad: boolean;
   created_at: string;
 }
 
@@ -144,6 +154,7 @@ export interface Attempt {
   startad: string;
   inlamnad: string | null;
   extra_minuter: number;
+  fokus_tapp: number;
 }
 
 export interface Answer {

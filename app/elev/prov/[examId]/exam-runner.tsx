@@ -33,7 +33,7 @@ import type {
   QuestionType,
   StudentAnswer,
 } from "@/lib/types";
-import { saveAnswer, submitAttempt } from "@/app/elev/actions";
+import { reportFocusLoss, saveAnswer, submitAttempt } from "@/app/elev/actions";
 
 export type RunnerQuestion = {
   examQuestionId: string;
@@ -126,6 +126,22 @@ export function ExamRunner({
     const iv = setInterval(tick, 1000);
     return () => clearInterval(iv);
   }, [deadline, doSubmit]);
+
+  // Anti-fusk: registrera när eleven lämnar provfliken och visa en varning.
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState !== "hidden" || submittedRef.current) return;
+      void reportFocusLoss(attemptId);
+      toast({
+        variant: "destructive",
+        title: "Du lämnade provfliken",
+        description:
+          "Detta registreras och är synligt för din lärare. Stanna kvar på provsidan tills du lämnat in.",
+      });
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, [attemptId, toast]);
 
   function persist(examQuestionId: string, svar: StudentAnswer) {
     setSaveState("saving");

@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   CircleDashed,
   Clock,
+  EyeOff,
   PenLine,
   RotateCcw,
 } from "lucide-react";
@@ -178,6 +179,18 @@ export function MonitorClient({
                         <Badge variant="secondary" className="gap-1">
                           <Clock className="h-3 w-3" />+{attempt.extra_minuter}{" "}
                           min
+                        </Badge>
+                      )}
+
+                      {attempt.fokus_tapp > 0 && (
+                        <Badge
+                          variant="destructive"
+                          className="gap-1"
+                          title="Antal gånger eleven lämnat provfliken"
+                        >
+                          <EyeOff className="h-3 w-3" />
+                          {attempt.fokus_tapp}{" "}
+                          {attempt.fokus_tapp === 1 ? "flikbyte" : "flikbyten"}
                         </Badge>
                       )}
 
