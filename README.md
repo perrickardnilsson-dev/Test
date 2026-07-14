@@ -1,1 +1,191 @@
-# Test
+# NO-provplattform för högstadiet
+
+En webbplattform för NO-lärare (biologi, fysik, kemi, teknik) på högstadiet i
+Sverige. Läraren tolkar gamla **frisläppta** nationella prov med AI, bygger
+frågebank, genererar prov (bank + AI-mix), publicerar till klasser, och rättar
+med AI-stöd som läraren granskar och godkänner. Eleverna gör proven digitalt i
+ett rent provläge med autosparande svar.
+
+All UI-text är på svenska. Byggd med Next.js 14 (App Router), TypeScript,
+Tailwind CSS, shadcn/ui-komponenter, Supabase (Postgres, Auth, Storage, RLS)
+och Anthropic Claude. Deploy-redo för Vercel.
+
+## Funktioner per fas
+
+- **Fas 1 – Konto & klasser:** E-post/lösenord-auth, roller (lärare/elev),
+  klasser med automatisk klasskod, samt inbjudan via klasskod eller
+  e-postlänk.
+- **Fas 2 – Frågebank & PDF-ingestion:** Ladda upp frisläppta NP-PDF:er → Claude
+  tolkar och extraherar frågor, alternativ, facit och bedömningsanvisningar →
+  läraren granskar/redigerar och godkänner innan de sparas.
+- **Fas 3 – Provgenerering:** Välj klass, arbetsområde (Lgr22), nivå (E/C/A),
+  frågetyper och antal. Provet blandar riktiga bankfrågor med nygenererade
+  AI-frågor. Förhandsgranska, redigera, byt ut frågor, sätt tidsfönster/
+  tidsgräns och publicera.
+- **Fas 4 – Elevens provläge:** Rent provläge (en fråga i taget eller alla på en
+  sida, lärarens val), autosparande svar, tidsgräns med auto-inlämning.
+- **Fas 5 – Rättning & resultat:** Flerval rättas automatiskt; kortsvar och
+  fritext får AI-förslag på poäng + nivå + motivering som läraren godkänner
+  eller justerar per svar. Rättning kan göras per fråga eller per elev, och
+  alla AI-förslag kan godkännas i klump. Resultat publiceras och blir synliga
+  för eleverna. Resultatöversikt per elev och per fråga (svåraste frågorna).
+
+**Lärarverktyg under provet:** live-övervakning av pågående prov (vem skriver,
+hur långt de kommit, vem har lämnat in), möjlighet att återöppna ett inlämnat
+försök och att ge enskilda elever förlängd tid. Frågor kan dessutom ha bilder
+(diagram, figurer, foton) som visas i provläget och resultatvyerna.
+
+**Övrigt:** glömt lösenord-flöde via e-postlänk, duplicering av prov till
+samma eller annan klass (t.ex. parallellklass eller nästa läsår), samt
+CSV-export av resultat (Excel-vänlig med poäng per fråga, totalpoäng och
+betygsnivå per elev).
+
+**Anti-fusk och rättvis bedömning:** slumpad frågeordning per elev (varje elev
+får sin egen ordning, inställning per prov), flikbytesvarning (eleven varnas
+när provfliken lämnas och antalet flikbyten syns i lärarens live-övervakning)
+och anonymiserad rättning (dölj elevnamn medan du rättar, växla med ett
+klick).
+
+**Ämneslag – delad frågebank:** lärare kan skapa eller gå med i ett ämneslag
+(via kod, som klasskoden fast för lärare) och markera egna frågor som delade.
+Delade frågor syns i kollegornas frågebank och kan användas i deras prov, men
+bara ägaren kan redigera eller ta bort dem. Delningen kan stängas av per fråga
+när som helst.
+
+**Utveckling över tid:** en utvecklingsvy per klass visar klassens resultat
+per arbetsområde (centralt innehåll) över alla rättade prov – svagaste
+områdena först – samt en matris med varje elevs resultat per prov i
+kronologisk ordning.
+
+**Omdömesunderlag med AI:** inför utvecklingssamtal genererar plattformen ett
+utkast till omdöme per elev utifrån hela resultathistoriken (per prov och per
+arbetsområde): styrkor, utvecklingsområden, konkreta nästa steg och en
+löpande text. Läraren redigerar, sparar och kopierar – enskilt eller hela
+klassen på en gång. Utkasten bygger enbart på provresultat och nämner aldrig
+betyg; eleverna ser aldrig underlagen.
+
+**E-postinbjudningar:** om `RESEND_API_KEY` är satt skickas inbjudningsmejl
+automatiskt via [Resend](https://resend.com) när läraren bjuder in en elev;
+utan nyckel kopierar läraren inbjudningslänken manuellt som tidigare.
+
+**Klassimport:** klistra in en hel elevlista (t.ex. kopierad från Excel –
+namn, kommatecken och tabbar hanteras automatiskt) så skapas inbjudningar för
+alla nya adresser i ett svep. Redan inbjudna eller medlemmar hoppas över, och
+mejl skickas automatiskt om Resend är konfigurerat.
+
+**Google-inloggning:** lärare och elever kan logga in med sitt
+Google-konto (t.ex. skolans Google Workspace). Vid första inloggningen väljer
+användaren roll (lärare/elev) och kan ange klasskod direkt – inga lösenord
+att glömma. Kräver att Google-providern aktiveras i Supabase (se nedan).
+
+## Frågetyper
+
+- Flerval (ett rätt svar)
+- Flerval (flera rätta svar)
+- Kortsvar (rättas med AI mot facit)
+- Fritext/resonemang (AI-förslag + lärargranskning, med bedömningsmatris E/C/A)
+
+## Mappstruktur
+
+```
+app/
+  (publikt)         # startsida, logga-in, registrera, inbjudan
+  larare/           # lärarvy: översikt, klasser, frågebank, prov, rättning
+  elev/             # elevvy: mina prov, klasser, provläge, resultat
+  api/larare/       # serverside AI-routes (ingestion, generering, rättning)
+components/
+  ui/               # shadcn/ui-komponenter
+  questions/        # frågeeditor och frågevisning
+lib/
+  ai/               # Anthropic-klient, prompts, zod-scheman, AI-flöden
+  supabase/         # klient-, server- och middleware-hjälpare
+  types.ts, constants.ts, lgr22.ts, grading.ts, utils.ts
+supabase/
+  migrations/       # SQL-schema med RLS, RPC:er och Storage-policyer
+  seed.sql          # exempelfrågor i alla fyra ämnen
+```
+
+## Kom igång
+
+### 1. Installera beroenden
+
+```bash
+npm install
+```
+
+### 2. Skapa ett Supabase-projekt
+
+1. Skapa ett projekt på [supabase.com](https://supabase.com).
+2. Öppna **SQL Editor** i Supabase, klistra in hela innehållet i
+   **`supabase/setup.sql`** och kör. Det är allt! Filen skapar tabeller,
+   RLS-policyer, RPC:er, Storage-buckets och exempelfrågor i ett svep.
+   - Den är säker att köra flera gånger och fungerar även som uppgradering
+     om du redan kört äldre migrationer – allt skapas med
+     `if not exists`/`create or replace` och seed-frågorna läggs bara in en
+     gång.
+   - Vill du hellre köra stegvis finns samma innehåll uppdelat i
+     `supabase/migrations/0001`–`0007` + `supabase/seed.sql`.
+3. Under **Authentication → Providers** – aktivera e-post/lösenord. För enkel
+   lokal testning kan du stänga av e-postbekräftelse.
+4. Under **Authentication → URL Configuration** – sätt Site URL till din
+   app-URL och lägg till `https://din-app/auth/confirm` och
+   `https://din-app/auth/callback` (och motsvarande för
+   `http://localhost:3000`) i Redirect URLs, så att glömt lösenord-länkarna
+   och Google-inloggningen fungerar.
+5. **Google-inloggning (valfritt):** skapa OAuth-uppgifter i
+   [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+   (typ "Web application"). Lägg in Supabase-callbacken
+   `https://<ditt-projekt>.supabase.co/auth/v1/callback` som Authorized
+   redirect URI. Aktivera sedan **Google** under
+   **Authentication → Providers** i Supabase och klistra in Client ID och
+   Client Secret. Utan detta döljs inte Google-knappen, men inloggningen ger
+   ett felmeddelande – aktivera providern eller be användarna använda
+   e-post/lösenord.
+
+### 3. Miljövariabler
+
+Kopiera `.env.example` till `.env.local` och fyll i:
+
+```bash
+cp .env.example .env.local
+```
+
+| Variabel | Beskrivning |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Projektets URL (Settings → API) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Anon-nyckel |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service-role-nyckel (endast server) |
+| `ANTHROPIC_API_KEY` | Din Anthropic-nyckel |
+| `NEXT_PUBLIC_APP_URL` | Bas-URL för inbjudningslänkar |
+| `RESEND_API_KEY` | (Valfri) Resend-nyckel för att skicka inbjudningsmejl |
+| `EMAIL_FROM` | (Valfri) Avsändaradress, t.ex. `NO-prov <inbjudan@din-doman.se>` |
+
+### 4. Starta
+
+```bash
+npm run dev
+```
+
+Öppna [http://localhost:3000](http://localhost:3000). Skapa ett lärarkonto,
+skapa en klass och testa flödet. Skapa sedan ett elevkonto (via klasskod eller
+inbjudningslänk) i ett annat webbläsarfönster för att göra provet.
+
+## Deploy till Vercel
+
+1. Pusha repot till GitHub och importera i Vercel.
+2. Lägg in samma miljövariabler i Vercel-projektet.
+3. Deploya. AI-routes körs som serverfunktioner (`maxDuration` satt till 300 s
+   för PDF-tolkning och rättning).
+
+## Säkerhet & integritet
+
+- **All AI körs på servern** – Anthropic-nyckeln exponeras aldrig mot klienten.
+  Alla AI-svar valideras med zod och görs om vid ogiltig JSON.
+- **Row Level Security** på alla tabeller: elever ser endast sina egna försök,
+  svar och publicerade resultat; lärare ser endast sina egna klasser och deras
+  data. Elevens provfrågor hämtas via RPC utan facit, och resultat lämnas ut
+  först när läraren publicerat rättningen.
+- **GDPR:** endast namn och e-post lagras om eleverna – inga personnummer.
+- **Endast frisläppta prov:** plattformen hämtar aldrig prov automatiskt från
+  nätet. Allt material laddas upp manuellt av läraren.
+```
