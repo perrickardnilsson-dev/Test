@@ -23,6 +23,8 @@ export async function getProfile(): Promise<Profile | null> {
 export async function requireRole(role: Role): Promise<Profile> {
   const profile = await getProfile();
   if (!profile) redirect("/logga-in");
+  // OAuth-användare som inte valt roll ännu skickas till rollvalet.
+  if (profile.onboarded === false) redirect("/valj-roll");
   if (profile.role !== role) {
     redirect(profile.role === "teacher" ? "/larare" : "/elev");
   }

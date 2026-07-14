@@ -87,6 +87,74 @@ export async function saveStudentReport(
   return { success: true };
 }
 
+/**
+ * Importerar en hel elevlista: skapar inbjudningar för alla nya adresser
+ * och hoppar över dem som redan är inbjudna eller medlemmar.
+ */
+export async function importInvitations(classId: string, emails: string[]) {
+  const supabase = await createClient();
+
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const unique = Array.from(
+    new Set(emails.map((e) => e.trim().toLowerCase())),
+  ).filter((e) => emailRe.test(e));
+  if (unique.length === 0) {
+    return { error: "Inga giltiga e-postadresser i listan" };
+  }
+
+  const [{ data: existingInv }, { data: membersData }] = await Promise.all([
+    supabase.from("invitations").select("email").eq("class_id", classId),
+    supabase
+      .from("class_members")
+      .select("profiles(email)")
+      .eq("class_id", classId),
+  ]);
+  const taken = new Set<string>([
+    ...((existingInv as { email: string }[]) ?? []).map((i) =>
+      i.email.toLowerCase(),
+    ),
+    ...(
+      (membersData as unknown as { profiles: { email: string } | null }[]) ??
+      []
+    )
+      .map((m) => m.profiles?.email.toLowerCase())
+      .filter((e): e is string => Boolean(e)),
+  ]);
+
+  const fresh = unique.filter((e) => !taken.has(e));
+  const skipped = unique.length - fresh.length;
+  if (fresh.length === 0) {
+    return { success: true, created: 0, skipped, emailsSent: 0 };
+  }
+
+  const { data: inserted, error } = await supabase
+    .from("invitations")
+    .insert(fresh.map((email) => ({ class_id: classId, email })))
+    .select("email, token");
+  if (error) return { error: error.message };
+
+  let emailsSent = 0;
+  if (emailEnabled()) {
+    const { data: klass } = await supabase
+      .from("classes")
+      .select("name")
+      .eq("id", classId)
+      .single();
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    for (const row of inserted ?? []) {
+      const result = await sendInvitationEmail({
+        to: row.email,
+        className: klass?.name ?? "din klass",
+        inviteUrl: `${baseUrl}/inbjudan/${row.token}`,
+      });
+      if (result.sent) emailsSent++;
+    }
+  }
+
+  revalidatePath(`/larare/klasser/${classId}`);
+  return { success: true, created: fresh.length, skipped, emailsSent };
+}
+
 export async function createInvitation(classId: string, email: string) {
   const supabase = await createClient();
   const clean = email.trim().toLowerCase();

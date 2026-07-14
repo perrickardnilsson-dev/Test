@@ -25,6 +25,7 @@ create table if not exists public.profiles (
   name text not null,
   email text not null,
   school_id uuid references public.schools (id) on delete set null,
+  onboarded boolean not null default true,
   created_at timestamptz not null default now()
 );
 
@@ -165,6 +166,8 @@ create table if not exists public.student_reports (
 -- skapades med en äldre version av schemat.
 alter table public.profiles
   add column if not exists school_id uuid references public.schools (id) on delete set null;
+alter table public.profiles
+  add column if not exists onboarded boolean not null default true;
 alter table public.question_bank add column if not exists bild_url text;
 alter table public.question_bank add column if not exists delad boolean not null default false;
 alter table public.exams add column if not exists slumpa_fragor boolean not null default false;
@@ -188,18 +191,26 @@ create index if not exists idx_student_reports_class on public.student_reports (
 -- 2. Profil skapas automatiskt vid registrering
 -- -------------------------------------------------------------
 
+-- E-postregistrering skickar med roll i metadata och blir klar direkt;
+-- OAuth-användare (Google) saknar roll och markeras som ej onboardade
+-- tills de valt roll.
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
 security definer set search_path = public
 as $$
 begin
-  insert into public.profiles (id, role, name, email)
+  insert into public.profiles (id, role, name, email, onboarded)
   values (
     new.id,
     coalesce(new.raw_user_meta_data ->> 'role', 'student'),
-    coalesce(new.raw_user_meta_data ->> 'name', split_part(new.email, '@', 1)),
-    new.email
+    coalesce(
+      new.raw_user_meta_data ->> 'name',
+      new.raw_user_meta_data ->> 'full_name',
+      split_part(new.email, '@', 1)
+    ),
+    new.email,
+    (new.raw_user_meta_data ->> 'role') is not null
   );
   return new;
 end;
@@ -742,6 +753,30 @@ language plpgsql security definer set search_path = public
 as $$
 begin
   update public.profiles set school_id = null where id = auth.uid();
+end;
+$$;
+
+-- Engångsval av roll för OAuth-användare (Google). Kan inte användas för
+-- att byta roll senare: fungerar bara medan onboarded = false.
+create or replace function public.complete_onboarding(p_role text, p_name text)
+returns void
+language plpgsql security definer set search_path = public
+as $$
+begin
+  if p_role not in ('teacher', 'student') then
+    raise exception 'Ogiltig roll';
+  end if;
+
+  update public.profiles
+  set role = p_role,
+      name = coalesce(nullif(trim(p_name), ''), name),
+      onboarded = true
+  where id = auth.uid()
+    and onboarded = false;
+
+  if not found then
+    raise exception 'Kontot är redan klart';
+  end if;
 end;
 $$;
 

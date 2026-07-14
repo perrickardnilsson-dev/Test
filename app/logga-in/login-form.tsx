@@ -16,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
+import { GoogleButton, OrDivider } from "@/components/google-button";
 
 export function LoginForm() {
   const router = useRouter();
@@ -110,6 +111,8 @@ export function LoginForm() {
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Loggar in…" : "Logga in"}
           </Button>
+          <OrDivider />
+          <GoogleButton next={searchParams.get("next") ?? "/"} />
           <p className="text-sm text-muted-foreground text-center">
             Har du inget konto?{" "}
             <Link href="/registrera" className="text-primary hover:underline">

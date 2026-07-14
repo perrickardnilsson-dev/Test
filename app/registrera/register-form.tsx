@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
+import { GoogleButton, OrDivider } from "@/components/google-button";
 import type { Role } from "@/lib/types";
 
 export function RegisterForm() {
@@ -161,6 +162,11 @@ export function RegisterForm() {
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Skapar konto…" : "Skapa konto"}
           </Button>
+          <OrDivider />
+          <GoogleButton />
+          <p className="text-xs text-muted-foreground text-center">
+            Med Google väljer du roll (lärare/elev) direkt efter inloggningen.
+          </p>
           <p className="text-sm text-muted-foreground text-center">
             Har du redan ett konto?{" "}
             <Link href="/logga-in" className="text-primary hover:underline">

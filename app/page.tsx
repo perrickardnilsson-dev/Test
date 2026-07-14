@@ -14,6 +14,7 @@ import {
 export default async function HomePage() {
   const profile = await getProfile();
   if (profile) {
+    if (profile.onboarded === false) redirect("/valj-roll");
     redirect(profile.role === "teacher" ? "/larare" : "/elev");
   }
 

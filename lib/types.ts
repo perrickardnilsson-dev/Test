@@ -41,6 +41,8 @@ export interface Profile {
   name: string;
   email: string;
   school_id: string | null;
+  /** false för OAuth-användare som ännu inte valt roll. */
+  onboarded: boolean;
   created_at: string;
 }
 

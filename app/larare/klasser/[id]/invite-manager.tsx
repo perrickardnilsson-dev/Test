@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import type { Invitation } from "@/lib/types";
 import { createInvitation, deleteInvitation } from "../actions";
+import { ImportStudentsDialog } from "./import-students-dialog";
 
 export function InviteManager({
   classId,
@@ -86,10 +87,15 @@ export function InviteManager({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>E-postinbjudningar</CardTitle>
-        <CardDescription>
-          Skapa en länk per elev. Länken går till registreringen.
-        </CardDescription>
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <CardTitle>E-postinbjudningar</CardTitle>
+            <CardDescription className="mt-1.5">
+              Skapa en länk per elev. Länken går till registreringen.
+            </CardDescription>
+          </div>
+          <ImportStudentsDialog classId={classId} />
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <form onSubmit={invite} className="flex gap-2">

@@ -68,6 +68,16 @@ betyg; eleverna ser aldrig underlagen.
 automatiskt via [Resend](https://resend.com) när läraren bjuder in en elev;
 utan nyckel kopierar läraren inbjudningslänken manuellt som tidigare.
 
+**Klassimport:** klistra in en hel elevlista (t.ex. kopierad från Excel –
+namn, kommatecken och tabbar hanteras automatiskt) så skapas inbjudningar för
+alla nya adresser i ett svep. Redan inbjudna eller medlemmar hoppas över, och
+mejl skickas automatiskt om Resend är konfigurerat.
+
+**Google-inloggning:** lärare och elever kan logga in med sitt
+Google-konto (t.ex. skolans Google Workspace). Vid första inloggningen väljer
+användaren roll (lärare/elev) och kan ange klasskod direkt – inga lösenord
+att glömma. Kräver att Google-providern aktiveras i Supabase (se nedan).
+
 ## Frågetyper
 
 - Flerval (ett rätt svar)
@@ -114,13 +124,23 @@ npm install
      `if not exists`/`create or replace` och seed-frågorna läggs bara in en
      gång.
    - Vill du hellre köra stegvis finns samma innehåll uppdelat i
-     `supabase/migrations/0001`–`0006` + `supabase/seed.sql`.
+     `supabase/migrations/0001`–`0007` + `supabase/seed.sql`.
 3. Under **Authentication → Providers** – aktivera e-post/lösenord. För enkel
    lokal testning kan du stänga av e-postbekräftelse.
 4. Under **Authentication → URL Configuration** – sätt Site URL till din
-   app-URL och lägg till `https://din-app/auth/confirm` (och motsvarande för
-   `http://localhost:3000`) i Redirect URLs, så att
-   glömt lösenord-länkarna fungerar.
+   app-URL och lägg till `https://din-app/auth/confirm` och
+   `https://din-app/auth/callback` (och motsvarande för
+   `http://localhost:3000`) i Redirect URLs, så att glömt lösenord-länkarna
+   och Google-inloggningen fungerar.
+5. **Google-inloggning (valfritt):** skapa OAuth-uppgifter i
+   [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+   (typ "Web application"). Lägg in Supabase-callbacken
+   `https://<ditt-projekt>.supabase.co/auth/v1/callback` som Authorized
+   redirect URI. Aktivera sedan **Google** under
+   **Authentication → Providers** i Supabase och klistra in Client ID och
+   Client Secret. Utan detta döljs inte Google-knappen, men inloggningen ger
+   ett felmeddelande – aktivera providern eller be användarna använda
+   e-post/lösenord.
 
 ### 3. Miljövariabler
 
