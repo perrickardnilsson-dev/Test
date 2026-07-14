@@ -49,6 +49,14 @@ export const gradingSuggestionSchema = z.object({
   motivering: z.string().min(1),
 });
 
+export const reportDraftSchema = z.object({
+  styrkor: z.array(z.string()).min(1),
+  utvecklingsomraden: z.array(z.string()).min(1),
+  nasta_steg: z.array(z.string()).min(1),
+  omdome: z.string().min(50),
+});
+
 export type ExtractionResult = z.infer<typeof extractionResultSchema>;
 export type GeneratedQuestions = z.infer<typeof generatedQuestionsSchema>;
 export type GradingSuggestion = z.infer<typeof gradingSuggestionSchema>;
+export type ReportDraft = z.infer<typeof reportDraftSchema>;

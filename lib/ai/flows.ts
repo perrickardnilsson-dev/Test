@@ -3,17 +3,21 @@ import {
   EXTRACTION_SYSTEM,
   GENERATION_SYSTEM,
   GRADING_SYSTEM,
+  REPORT_SYSTEM,
   extractionPrompt,
   generationPrompt,
   gradingPrompt,
+  reportPrompt,
 } from "@/lib/ai/prompts";
 import {
   extractionResultSchema,
   generatedQuestionsSchema,
   gradingSuggestionSchema,
+  reportDraftSchema,
   type ExtractionResult,
   type GeneratedQuestions,
   type GradingSuggestion,
+  type ReportDraft,
 } from "@/lib/ai/schemas";
 import type { Level, QuestionType, Subject } from "@/lib/types";
 
@@ -65,5 +69,20 @@ export async function gradeFreeText(opts: {
     prompt: gradingPrompt(opts),
     schema: gradingSuggestionSchema,
     maxTokens: 1024,
+  });
+}
+
+export async function generateReportDraft(opts: {
+  elevnamn: string;
+  amne: Subject;
+  arskurs: number;
+  provrader: string[];
+  omradesrader: string[];
+}): Promise<ReportDraft> {
+  return generateStructured({
+    system: REPORT_SYSTEM,
+    prompt: reportPrompt(opts),
+    schema: reportDraftSchema,
+    maxTokens: 2048,
   });
 }

@@ -71,6 +71,38 @@ ${JSON_QUESTION_FORMAT}`;
 
 export const GRADING_SYSTEM = `Du är en erfaren NO-lärare i svensk grundskola som rättar elevsvar rättvist och konsekvent enligt bedömningsanvisningar och kunskapskrav (E/C/A). Du är generös nog att belöna korrekt förståelse även om formuleringen är enkel, men kräver att sakinnehållet stämmer. Motiveringen ska vara kort, konkret och på svenska, riktad till läraren.`;
 
+export const REPORT_SYSTEM = `Du är en erfaren NO-lärare i svensk grundskola som skriver omdömesunderlag inför utvecklingssamtal. Du skriver sakligt, konkret och utvecklingsinriktat på svenska, i linje med Lgr22. Du utgår ENDAST från de provresultat som ges – du hittar aldrig på styrkor eller svagheter som inte syns i underlaget. Du uttalar dig aldrig om betyg och lovar inget om framtida betyg. Tonen är professionell och stödjande, texten riktar sig till elev och vårdnadshavare. Använd elevens förnamn.`;
+
+export function reportPrompt(opts: {
+  elevnamn: string;
+  amne: Subject;
+  arskurs: number;
+  provrader: string[];
+  omradesrader: string[];
+}): string {
+  return `Skriv ett utkast till omdömesunderlag för en elev i ${subjectLabel(
+    opts.amne,
+  )}, årskurs ${opts.arskurs}.
+
+ELEV: ${opts.elevnamn}
+
+RESULTAT PER PROV (kronologisk ordning):
+${opts.provrader.join("\n")}
+
+RESULTAT PER ARBETSOMRÅDE (centralt innehåll, samlat över alla prov):
+${opts.omradesrader.join("\n")}
+
+Analysera resultaten: identifiera styrkor, utvecklingsområden och trend över tid (förbättring/försämring om det syns). Var konkret och koppla till arbetsområdena – skriv t.ex. "visar god förståelse för kemiska reaktioner" i stället för "duktig på kemi".
+
+Svara ENDAST med JSON på formen:
+{
+  "styrkor": ["...", "..."],
+  "utvecklingsomraden": ["...", "..."],
+  "nasta_steg": ["konkret råd 1", "konkret råd 2"],
+  "omdome": "Löpande text på 100–180 ord som sammanfattar elevens kunskapsutveckling, styrkor och utvecklingsområden. Inled med elevens förnamn."
+}`;
+}
+
 export function gradingPrompt(opts: {
   fragetext: string;
   maxPoang: number;

@@ -149,6 +149,18 @@ create table if not exists public.gradings (
   updated_at timestamptz not null default now()
 );
 
+-- Omdömesunderlag per elev och klass (AI-utkast som läraren redigerar).
+create table if not exists public.student_reports (
+  id uuid primary key default gen_random_uuid(),
+  class_id uuid not null references public.classes (id) on delete cascade,
+  student_id uuid not null references public.profiles (id) on delete cascade,
+  teacher_id uuid not null references public.profiles (id) on delete cascade,
+  innehall text not null,
+  updated_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  unique (class_id, student_id)
+);
+
 -- Kolumner som tillkommit i senare versioner – läggs till om databasen
 -- skapades med en äldre version av schemat.
 alter table public.profiles
@@ -170,6 +182,7 @@ create index if not exists idx_exam_questions_exam on public.exam_questions (exa
 create index if not exists idx_attempts_exam on public.attempts (exam_id);
 create index if not exists idx_answers_attempt on public.answers (attempt_id);
 create index if not exists idx_profiles_school on public.profiles (school_id);
+create index if not exists idx_student_reports_class on public.student_reports (class_id);
 
 -- -------------------------------------------------------------
 -- 2. Profil skapas automatiskt vid registrering
@@ -278,6 +291,7 @@ alter table public.attempts enable row level security;
 alter table public.answers enable row level security;
 alter table public.gradings enable row level security;
 alter table public.schools enable row level security;
+alter table public.student_reports enable row level security;
 
 -- profiles
 drop policy if exists "profiles_select_own" on public.profiles;
@@ -478,6 +492,12 @@ create policy "gradings_teacher_all" on public.gradings
       where ans.id = answer_id and public.is_exam_teacher(a.exam_id)
     )
   );
+
+-- student_reports: endast klassens lärare – eleverna ser aldrig underlagen.
+drop policy if exists "student_reports_teacher_all" on public.student_reports;
+create policy "student_reports_teacher_all" on public.student_reports
+  for all using (public.is_class_teacher(class_id))
+  with check (public.is_class_teacher(class_id));
 
 -- -------------------------------------------------------------
 -- 5. RPC:er (security definer)

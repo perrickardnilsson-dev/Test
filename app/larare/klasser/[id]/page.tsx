@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, TrendingUp } from "lucide-react";
+import { ArrowLeft, FileText, TrendingUp } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import {
   Card,
@@ -78,10 +78,15 @@ export default async function ClassDetailPage({
           </div>
           <p className="text-muted-foreground">Årskurs {cls.arskurs}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline">
             <Link href={`/larare/klasser/${cls.id}/utveckling`}>
               <TrendingUp className="h-4 w-4" /> Utveckling
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href={`/larare/klasser/${cls.id}/omdomen`}>
+              <FileText className="h-4 w-4" /> Omdömen
             </Link>
           </Button>
           <Button asChild>

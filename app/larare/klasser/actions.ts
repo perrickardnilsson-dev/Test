@@ -60,6 +60,33 @@ export async function deleteClass(classId: string) {
   return { success: true };
 }
 
+/** Sparar (upsertar) lärarens omdömesunderlag för en elev i en klass. */
+export async function saveStudentReport(
+  classId: string,
+  studentId: string,
+  innehall: string,
+) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Inte inloggad" };
+
+  const { error } = await supabase.from("student_reports").upsert(
+    {
+      class_id: classId,
+      student_id: studentId,
+      teacher_id: user.id,
+      innehall,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "class_id,student_id" },
+  );
+  if (error) return { error: error.message };
+  revalidatePath(`/larare/klasser/${classId}/omdomen`);
+  return { success: true };
+}
+
 export async function createInvitation(classId: string, email: string) {
   const supabase = await createClient();
   const clean = email.trim().toLowerCase();

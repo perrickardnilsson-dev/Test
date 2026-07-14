@@ -57,6 +57,13 @@ per arbetsområde (centralt innehåll) över alla rättade prov – svagaste
 områdena först – samt en matris med varje elevs resultat per prov i
 kronologisk ordning.
 
+**Omdömesunderlag med AI:** inför utvecklingssamtal genererar plattformen ett
+utkast till omdöme per elev utifrån hela resultathistoriken (per prov och per
+arbetsområde): styrkor, utvecklingsområden, konkreta nästa steg och en
+löpande text. Läraren redigerar, sparar och kopierar – enskilt eller hela
+klassen på en gång. Utkasten bygger enbart på provresultat och nämner aldrig
+betyg; eleverna ser aldrig underlagen.
+
 **E-postinbjudningar:** om `RESEND_API_KEY` är satt skickas inbjudningsmejl
 automatiskt via [Resend](https://resend.com) när läraren bjuder in en elev;
 utan nyckel kopierar läraren inbjudningslänken manuellt som tidigare.
@@ -107,7 +114,7 @@ npm install
      `if not exists`/`create or replace` och seed-frågorna läggs bara in en
      gång.
    - Vill du hellre köra stegvis finns samma innehåll uppdelat i
-     `supabase/migrations/0001`–`0005` + `supabase/seed.sql`.
+     `supabase/migrations/0001`–`0006` + `supabase/seed.sql`.
 3. Under **Authentication → Providers** – aktivera e-post/lösenord. För enkel
    lokal testning kan du stänga av e-postbekräftelse.
 4. Under **Authentication → URL Configuration** – sätt Site URL till din

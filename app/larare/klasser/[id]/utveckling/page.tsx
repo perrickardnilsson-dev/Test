@@ -198,14 +198,22 @@ export default async function ProgressPage({
         <ArrowLeft className="h-4 w-4" /> Tillbaka till klassen
       </Link>
 
-      <div>
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold">Utveckling: {klass.name}</h1>
-          <SubjectBadge subject={klass.amne} />
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold">Utveckling: {klass.name}</h1>
+            <SubjectBadge subject={klass.amne} />
+          </div>
+          <p className="text-muted-foreground">
+            Resultat över tid för {exams.length} rättade prov.
+          </p>
         </div>
-        <p className="text-muted-foreground">
-          Resultat över tid för {exams.length} rättade prov.
-        </p>
+        <Link
+          href={`/larare/klasser/${id}/omdomen`}
+          className="text-sm font-medium text-primary hover:underline"
+        >
+          Generera omdömesunderlag →
+        </Link>
       </div>
 
       {exams.length === 0 ? (
