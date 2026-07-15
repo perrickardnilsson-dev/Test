@@ -20,3 +20,5 @@ export default async function ValjRollPage() {
     </div>
   );
 }
+
+export const dynamic = "force-dynamic";

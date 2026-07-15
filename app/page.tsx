@@ -136,3 +136,5 @@ export default async function HomePage({
     </div>
   );
 }
+
+export const dynamic = "force-dynamic";

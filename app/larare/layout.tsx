@@ -28,3 +28,5 @@ export default async function TeacherLayout({
     </AppShell>
   );
 }
+
+export const dynamic = "force-dynamic";
