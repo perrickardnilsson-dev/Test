@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { SubjectBadge } from "@/components/subject-badge";
 import { EXAM_STATUS_LABELS } from "@/lib/constants";
+import { firstName } from "@/lib/display-name";
 import type { Class, Exam } from "@/lib/types";
 
 export default async function TeacherDashboard() {
@@ -48,7 +49,7 @@ export default async function TeacherDashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold">Hej {profile.name.split(" ")[0]}!</h1>
+        <h1 className="text-2xl font-bold">Hej {firstName(profile.name)}!</h1>
         <p className="text-muted-foreground">
           Här är en översikt över din arbetsyta.
         </p>

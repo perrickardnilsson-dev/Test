@@ -27,6 +27,7 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false);
   const invalidLink = searchParams.get("fel") === "ogiltig-lank";
   const expiredLink = searchParams.get("fel") === "utgangen-lank";
+  const missingProfile = searchParams.get("fel") === "saknar-profil";
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -83,6 +84,15 @@ export function LoginForm() {
               mejlappen förhandsvisade länken). Registrera dig igen, eller stäng
               av e-postbekräftelse i Supabase under Authentication → Providers
               → Email om du testar lokalt.
+            </p>
+          )}
+          {missingProfile && (
+            <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+              Du är inloggad men din användarprofil saknas i databasen. Det
+              händer om du registrerade dig innan databasen var skapad. Kör{" "}
+              <code className="text-xs">supabase/setup.sql</code> i Supabase SQL
+              Editor och registrera dig igen, eller be administratören skapa
+              profilen.
             </p>
           )}
           <div className="space-y-2">

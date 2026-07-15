@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SubjectBadge } from "@/components/subject-badge";
 import { formatDateTime } from "@/lib/utils";
+import { firstName } from "@/lib/display-name";
 import type { Attempt, Class, Exam } from "@/lib/types";
 
 type ExamRow = Exam & {
@@ -39,7 +40,7 @@ export default async function StudentDashboard() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">
-          Hej {profile.name.split(" ")[0]}!
+          Hej {firstName(profile.name)}!
         </h1>
         <p className="text-muted-foreground">Här är dina tilldelade prov.</p>
       </div>
