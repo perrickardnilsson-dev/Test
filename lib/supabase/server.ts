@@ -10,7 +10,7 @@ export async function createClient() {
     throw new Error("SUPABASE_NOT_CONFIGURED");
   }
 
-  const cookieStore = await cookies();
+  const cookieStore = cookies();
 
   return createServerClient(env.url, env.anonKey, {
       cookies: {
