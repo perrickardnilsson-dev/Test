@@ -83,7 +83,7 @@ export function RegisterForm() {
 
     if (data.session) {
       toast({ variant: "success", title: "Kontot är skapat!" });
-      router.push(role === "teacher" ? "/larare" : "/elev");
+      router.push("/auth/efter-inloggning");
       router.refresh();
     } else {
       toast({
@@ -167,7 +167,7 @@ export function RegisterForm() {
             {loading ? "Skapar konto…" : "Skapa konto"}
           </Button>
           <OrDivider />
-          <GoogleButton />
+          <GoogleButton next="/auth/efter-inloggning" />
           <p className="text-xs text-muted-foreground text-center">
             Med Google väljer du roll (lärare/elev) direkt efter inloggningen.
           </p>

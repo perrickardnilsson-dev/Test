@@ -34,7 +34,34 @@ async function repairMissingProfile(user: {
       .select("*")
       .single();
 
-    if (error || !data) return null;
+    if (error || !data) {
+      // Profil skapades av triggern mellan försöken – hämta den.
+      if (error?.code === "23505") {
+        const { data: existing } = await service
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single();
+        if (existing) return existing as Profile;
+      }
+
+      // Äldre databas utan onboarded-kolumn.
+      if (error?.message?.includes("onboarded")) {
+        const { data: legacy, error: legacyErr } = await service
+          .from("profiles")
+          .insert({
+            id: user.id,
+            role,
+            name,
+            email: user.email ?? "",
+          })
+          .select("*")
+          .single();
+        if (!legacyErr && legacy) return legacy as Profile;
+      }
+
+      return null;
+    }
     return data as Profile;
   } catch {
     return null;
@@ -60,7 +87,12 @@ export async function getProfile(): Promise<Profile | null> {
 
     if (data) return data as Profile;
 
-    if (error?.code === "PGRST116" || error?.code === "PGRST301") {
+    const shouldRepair =
+      error?.code === "PGRST116" ||
+      error?.code === "PGRST301" ||
+      error?.details?.includes("0 rows");
+
+    if (shouldRepair) {
       return repairMissingProfile(user);
     }
 

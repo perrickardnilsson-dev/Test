@@ -48,17 +48,12 @@ export function LoginForm() {
       return;
     }
 
-    const { data } = await supabase.auth.getUser();
-    let dest = searchParams.get("next");
-    if (!dest && data.user) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", data.user.id)
-        .single();
-      dest = profile?.role === "teacher" ? "/larare" : "/elev";
-    }
-    router.push(dest || "/");
+    const next = searchParams.get("next");
+    router.push(
+      next && next.startsWith("/")
+        ? `/auth/efter-inloggning?next=${encodeURIComponent(next)}`
+        : "/auth/efter-inloggning",
+    );
     router.refresh();
   }
 
@@ -131,7 +126,13 @@ export function LoginForm() {
             {loading ? "Loggar in…" : "Logga in"}
           </Button>
           <OrDivider />
-          <GoogleButton next={searchParams.get("next") ?? "/"} />
+          <GoogleButton
+            next={
+              searchParams.get("next")
+                ? `/auth/efter-inloggning?next=${encodeURIComponent(searchParams.get("next")!)}`
+                : "/auth/efter-inloggning"
+            }
+          />
           <p className="text-sm text-muted-foreground text-center">
             Har du inget konto?{" "}
             <Link href="/registrera" className="text-primary hover:underline">

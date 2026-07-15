@@ -50,8 +50,13 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  const hasAuthMessage = request.nextUrl.searchParams.has("fel");
   const isAuthPage =
-    path.startsWith("/logga-in") || path.startsWith("/registrera");
+    (path.startsWith("/logga-in") || path.startsWith("/registrera")) &&
+    !hasAuthMessage;
+  const isPostAuth =
+    path.startsWith("/auth/efter-inloggning") ||
+    path.startsWith("/valj-roll");
   const isProtected =
     path.startsWith("/larare") || path.startsWith("/elev");
 
@@ -64,7 +69,13 @@ export async function updateSession(request: NextRequest) {
 
   if (user && isAuthPage) {
     const url = request.nextUrl.clone();
-    url.pathname = "/";
+    url.pathname = "/auth/efter-inloggning";
+    return NextResponse.redirect(url);
+  }
+
+  if (user && path === "/" && !isPostAuth) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/efter-inloggning";
     return NextResponse.redirect(url);
   }
 
