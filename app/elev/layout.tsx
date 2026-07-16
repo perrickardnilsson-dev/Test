@@ -1,10 +1,9 @@
-import { LayoutDashboard, Users } from "lucide-react";
 import { requireRole } from "@/lib/auth";
 import { AppShell, type NavItem } from "@/components/app-shell";
 
 const NAV: NavItem[] = [
-  { href: "/elev", label: "Mina prov", icon: LayoutDashboard },
-  { href: "/elev/klasser", label: "Mina klasser", icon: Users },
+  { href: "/elev", label: "Mina prov", icon: "overview" },
+  { href: "/elev/klasser", label: "Mina klasser", icon: "classes" },
 ];
 
 export default async function StudentLayout({

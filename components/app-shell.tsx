@@ -2,15 +2,44 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { GraduationCap, LogOut } from "lucide-react";
+import {
+  FileText,
+  GraduationCap,
+  LayoutDashboard,
+  Library,
+  LogOut,
+  Users,
+  UsersRound,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Profile } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
+/** Ikonnycklar – måste vara strängar så server-layout kan skicka nav till klienten. */
+export type NavIcon =
+  | "overview"
+  | "users"
+  | "library"
+  | "exams"
+  | "teams"
+  | "classes";
+
+const NAV_ICONS: Record<
+  NavIcon,
+  React.ComponentType<{ className?: string }>
+> = {
+  overview: LayoutDashboard,
+  users: Users,
+  library: Library,
+  exams: FileText,
+  teams: UsersRound,
+  classes: Users,
+};
+
 export interface NavItem {
   href: string;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: NavIcon;
 }
 
 export function AppShell({
@@ -39,6 +68,7 @@ export function AppShell({
             </Link>
             <nav className="flex items-center gap-1">
               {nav.map((item) => {
+                const Icon = NAV_ICONS[item.icon];
                 const active =
                   activePath === item.href ||
                   (item.href !== homeHref && activePath.startsWith(item.href));
@@ -53,7 +83,7 @@ export function AppShell({
                         : "text-slate-600 hover:bg-slate-100",
                     )}
                   >
-                    <item.icon className="h-4 w-4" />
+                    <Icon className="h-4 w-4" />
                     <span className="hidden md:inline">{item.label}</span>
                   </Link>
                 );
