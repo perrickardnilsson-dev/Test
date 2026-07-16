@@ -16,19 +16,8 @@ import { firstName } from "@/lib/display-name";
 import type { Class, Exam } from "@/lib/types";
 
 export default async function TeacherDashboard() {
-  let profile;
-  try {
-    profile = await requireRole("teacher");
-  } catch {
-    redirect("/logga-in?fel=serverfel");
-  }
-
-  let supabase;
-  try {
-    supabase = await createClient();
-  } catch {
-    redirect("/konfiguration?fel=supabase");
-  }
+  const profile = await requireRole("teacher");
+  const supabase = await createClient();
 
   let classList: Class[] = [];
   let examList: Exam[] = [];
