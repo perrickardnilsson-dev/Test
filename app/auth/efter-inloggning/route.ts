@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { getProfile } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
+import { getProfile, repairMissingProfile } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
 
 /**
@@ -15,7 +16,18 @@ export async function GET(request: Request) {
   }
 
   try {
-    const profile = await getProfile();
+    let profile = await getProfile();
+
+    if (!profile) {
+      const supabase = await createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        profile = await repairMissingProfile(user);
+      }
+    }
+
     if (!profile) {
       return NextResponse.redirect(`${origin}/logga-in?fel=saknar-profil`);
     }

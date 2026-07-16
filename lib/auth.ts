@@ -4,7 +4,7 @@ import { isSupabaseConfigured } from "@/lib/env";
 import type { Profile, Role } from "@/lib/types";
 
 /** Skapar profilrad om användaren finns i Auth men saknar rad (vanligt efter sent setup). */
-async function repairMissingProfile(user: {
+export async function repairMissingProfile(user: {
   id: string;
   email?: string;
   user_metadata?: Record<string, unknown>;
