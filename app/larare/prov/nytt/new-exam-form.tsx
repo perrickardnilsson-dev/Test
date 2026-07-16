@@ -108,6 +108,7 @@ export function NewExamForm({
         }),
       });
       const data = await res.json();
+      const warnings = (data.warnings as string[] | undefined) ?? [];
       if (!res.ok) {
         toast({
           variant: "destructive",
@@ -118,9 +119,12 @@ export function NewExamForm({
         return;
       }
       toast({
-        variant: "success",
+        variant: warnings?.length ? "default" : "success",
         title: "Prov skapat",
-        description: "Förhandsgranska och redigera innan du publicerar.",
+        description:
+          warnings?.length > 0
+            ? `${data.questionCount ?? ""} frågor lades till. ${warnings.join(" ")}`
+            : `${data.questionCount ?? ""} frågor lades till. Förhandsgranska innan du publicerar.`,
       });
       router.push(`/larare/prov/${data.examId}`);
     } catch {

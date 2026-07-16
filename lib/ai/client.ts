@@ -1,7 +1,9 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 
-export const MODEL = "claude-sonnet-4-20250514";
+/** Standardmodell – kan överstyras med ANTHROPIC_MODEL i miljövariabler. */
+export const MODEL =
+  process.env.ANTHROPIC_MODEL?.trim() || "claude-sonnet-4-6";
 
 let cached: Anthropic | null = null;
 

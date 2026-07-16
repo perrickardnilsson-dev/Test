@@ -52,7 +52,9 @@ export default async function ExamDetailPage({
     .eq("exam_id", id)
     .order("ordning");
 
-  const examQuestions = (eqData as ExamQuestionWithBank[]) ?? [];
+  const examQuestions = ((eqData as ExamQuestionWithBank[]) ?? []).filter(
+    (eq) => eq.question_bank,
+  );
 
   // Bankfrågor i samma ämne som inte redan är med.
   const usedIds = examQuestions.map((eq) => eq.question_id);

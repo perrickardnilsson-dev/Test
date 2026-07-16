@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { generateQuestions } from "@/lib/ai/flows";
 import type { QuestionBankItem, QuestionType, Subject } from "@/lib/types";
 
@@ -28,6 +28,32 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
+function matchesContent(q: QuestionBankItem, areas: string[]): boolean {
+  return areas.some(
+    (ci) =>
+      q.centralt_innehall.toLowerCase().includes(ci.toLowerCase()) ||
+      ci.toLowerCase().includes(q.centralt_innehall.toLowerCase()),
+  );
+}
+
+function pickBankQuestions(
+  bank: QuestionBankItem[],
+  areas: string[],
+  arskurs: number,
+  count: number,
+): QuestionBankItem[] {
+  if (count <= 0 || bank.length === 0) return [];
+
+  const gradeMatch = bank.filter((q) => Math.abs(q.arskurs - arskurs) <= 1);
+  const pool = gradeMatch.length > 0 ? gradeMatch : bank;
+
+  const matched = pool.filter((q) => matchesContent(q, areas));
+  const rest = pool.filter((q) => !matched.includes(q));
+  const ordered = shuffle([...matched, ...rest]);
+
+  return ordered.slice(0, count);
+}
+
 export async function POST(request: Request) {
   const supabase = await createClient();
   const {
@@ -45,6 +71,7 @@ export async function POST(request: Request) {
     );
   }
   const body = parsed.data;
+  const warnings: string[] = [];
 
   const { data: klass } = await supabase
     .from("classes")
@@ -57,34 +84,39 @@ export async function POST(request: Request) {
   const amne = klass.amne as Subject;
   const arskurs = klass.arskurs as number;
 
-  // 1. Välj bankfrågor som matchar ämne, årskurs, valt innehåll och frågetyp.
+  const service = createServiceClient();
   const chosenQuestionIds: string[] = [];
+
+  // 1. Välj bankfrågor (service-klient så RLS inte döljer seed-frågor).
   if (body.antal_bank > 0) {
-    const { data: bank } = await supabase
+    const { data: bank, error: bankErr } = await service
       .from("question_bank")
       .select("*")
       .eq("amne", amne)
       .in("fragetyp", body.fragetyper);
 
-    const candidates = ((bank as QuestionBankItem[]) ?? []).filter(
-      (q) =>
-        Math.abs(q.arskurs - arskurs) <= 1 &&
-        body.centralt_innehall.some(
-          (ci) =>
-            q.centralt_innehall.toLowerCase().includes(ci.toLowerCase()) ||
-            ci.toLowerCase().includes(q.centralt_innehall.toLowerCase()),
-        ),
+    if (bankErr) {
+      return NextResponse.json({ error: bankErr.message }, { status: 500 });
+    }
+
+    const picked = pickBankQuestions(
+      (bank as QuestionBankItem[]) ?? [],
+      body.centralt_innehall,
+      arskurs,
+      body.antal_bank,
     );
-    const pool = candidates.length > 0 ? candidates : (bank as QuestionBankItem[]) ?? [];
-    chosenQuestionIds.push(
-      ...shuffle(pool).slice(0, body.antal_bank).map((q) => q.id),
-    );
+    chosenQuestionIds.push(...picked.map((q) => q.id));
+
+    if (picked.length < body.antal_bank) {
+      warnings.push(
+        `Hittade bara ${picked.length} av ${body.antal_bank} begärda bankfrågor i ${amne}.`,
+      );
+    }
   }
 
   // 2. Generera AI-frågor och spara i frågebanken.
   if (body.antal_ai > 0) {
-    // Exempel att härma från banken.
-    const { data: examples } = await supabase
+    const { data: examples } = await service
       .from("question_bank")
       .select("fragetext, alternativ")
       .eq("amne", amne)
@@ -142,32 +174,46 @@ export async function POST(request: Request) {
       }));
 
       if (rows.length > 0) {
-        const { data: inserted, error: insErr } = await supabase
+        const { data: inserted, error: insErr } = await service
           .from("question_bank")
           .insert(rows)
           .select("id");
         if (insErr) throw new Error(insErr.message);
-        chosenQuestionIds.push(...(inserted ?? []).map((r) => r.id));
+        chosenQuestionIds.push(
+          ...(inserted ?? []).map((r: { id: string }) => r.id),
+        );
+      }
+
+      if (rows.length < body.antal_ai) {
+        warnings.push(
+          `AI genererade bara ${rows.length} av ${body.antal_ai} begärda frågor.`,
+        );
       }
     } catch (e) {
       const message =
         e instanceof Error ? e.message : "AI-generering misslyckades";
-      // Fortsätt ändå om vi fick bankfrågor.
+      warnings.push(message);
       if (chosenQuestionIds.length === 0) {
         return NextResponse.json({ error: message }, { status: 500 });
       }
     }
   }
 
-  if (chosenQuestionIds.length === 0) {
+  const uniqueQuestionIds = Array.from(new Set(chosenQuestionIds));
+
+  if (uniqueQuestionIds.length === 0) {
     return NextResponse.json(
       { error: "Inga frågor kunde väljas. Justera urvalet och försök igen." },
       { status: 400 },
     );
   }
 
+  if (uniqueQuestionIds.length < chosenQuestionIds.length) {
+    warnings.push("Dubblettfrågor togs bort innan provet skapades.");
+  }
+
   // 3. Skapa provet (utkast) och koppla frågorna i blandad ordning.
-  const { data: exam, error: examErr } = await supabase
+  const { data: exam, error: examErr } = await service
     .from("exams")
     .insert({
       class_id: body.classId,
@@ -185,27 +231,37 @@ export async function POST(request: Request) {
     );
   }
 
-  const { data: pointsRows } = await supabase
+  const { data: pointsRows } = await service
     .from("question_bank")
     .select("id, poang")
-    .in("id", chosenQuestionIds);
+    .in("id", uniqueQuestionIds);
   const pointsMap = new Map(
-    (pointsRows ?? []).map((r) => [r.id, r.poang as number]),
+    (pointsRows ?? []).map((r: { id: string; poang: number }) => [
+      r.id,
+      r.poang,
+    ]),
   );
 
-  const examQuestions = shuffle(chosenQuestionIds).map((qid, i) => ({
+  const examQuestions = shuffle(uniqueQuestionIds).map((qid, i) => ({
     exam_id: exam.id,
     question_id: qid,
     ordning: i + 1,
     poang: pointsMap.get(qid) ?? 1,
   }));
 
-  const { error: eqErr } = await supabase
+  const { error: eqErr } = await service
     .from("exam_questions")
     .insert(examQuestions);
   if (eqErr) {
     return NextResponse.json({ error: eqErr.message }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true, examId: exam.id });
+  return NextResponse.json({
+    success: true,
+    examId: exam.id,
+    questionCount: examQuestions.length,
+    bankCount: Math.min(body.antal_bank, uniqueQuestionIds.length),
+    aiCount: Math.max(0, uniqueQuestionIds.length - body.antal_bank),
+    warnings,
+  });
 }
