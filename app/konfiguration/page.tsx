@@ -130,7 +130,12 @@ export default async function KonfigurationPage({
             </section>
 
             <section className="space-y-3">
-              <h2 className="font-semibold">3. Supabase Auth (produktion)</h2>
+              <h2 className="font-semibold">3. Supabase Auth (produktion) — viktigt för inloggning!</h2>
+              <p className="text-sm text-amber-800 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                Om miljövariablerna är gröna men inloggning ändå kraschar har du
+                troligen inte satt detta. Gå till Supabase → Authentication → URL
+                Configuration.
+              </p>
               <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
                 <li>
                   Site URL: din Vercel-URL (t.ex.{" "}
@@ -149,9 +154,22 @@ export default async function KonfigurationPage({
             </section>
 
             {supabaseOk && dbCheck?.ok && (
+<<<<<<< HEAD
               <Button asChild className="w-full">
                 <Link href="/">Fortsätt till startsidan</Link>
               </Button>
+=======
+              <div className="space-y-3">
+                <Button asChild className="w-full">
+                  <Link href="/">Fortsätt till startsidan</Link>
+                </Button>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/api/debug-auth">
+                    Testa inloggning (diagnostik)
+                  </Link>
+                </Button>
+              </div>
+>>>>>>> cursor/no-lararplattform-57ec
             )}
           </CardContent>
         </Card>
