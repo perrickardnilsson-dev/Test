@@ -12,14 +12,19 @@ import {
 import { Button } from "@/components/ui/button";
 import { SubjectBadge } from "@/components/subject-badge";
 import { EXAM_STATUS_LABELS } from "@/lib/constants";
+import { firstName } from "@/lib/display-name";
 import type { Class, Exam } from "@/lib/types";
 
 export default async function TeacherDashboard() {
   const profile = await requireRole("teacher");
   const supabase = await createClient();
 
-  const [{ data: classes }, { data: exams }, { count: questionCount }] =
-    await Promise.all([
+  let classList: Class[] = [];
+  let examList: Exam[] = [];
+  let questionCount = 0;
+
+  try {
+    const [{ data: classes }, { data: exams }, { count }] = await Promise.all([
       supabase.from("classes").select("*").order("created_at"),
       supabase
         .from("exams")
@@ -30,9 +35,12 @@ export default async function TeacherDashboard() {
         .from("question_bank")
         .select("*", { count: "exact", head: true }),
     ]);
-
-  const classList = (classes as Class[]) ?? [];
-  const examList = (exams as Exam[]) ?? [];
+    classList = (classes as Class[]) ?? [];
+    examList = (exams as Exam[]) ?? [];
+    questionCount = count ?? 0;
+  } catch {
+    // Tabeller eller RLS-problem – visa tom översikt istället för serverkrasch.
+  }
 
   const stats = [
     { label: "Klasser", value: classList.length, icon: Users, href: "/larare/klasser" },
@@ -48,7 +56,7 @@ export default async function TeacherDashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold">Hej {profile.name.split(" ")[0]}!</h1>
+        <h1 className="text-2xl font-bold">Hej {firstName(profile.name)}!</h1>
         <p className="text-muted-foreground">
           Här är en översikt över din arbetsyta.
         </p>

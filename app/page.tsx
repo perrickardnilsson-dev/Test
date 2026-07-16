@@ -11,7 +11,17 @@ import {
   Users,
 } from "lucide-react";
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; error_code?: string }>;
+}) {
+  const params = await searchParams;
+  // Supabase skickar hit vid fel om Site URL = localhost:3000 utan /auth/confirm.
+  if (params.error_code === "otp_expired" || params.error === "access_denied") {
+    redirect("/logga-in?fel=utgangen-lank");
+  }
+
   const profile = await getProfile();
   if (profile) {
     if (profile.onboarded === false) redirect("/valj-roll");
@@ -126,3 +136,5 @@ export default async function HomePage() {
     </div>
   );
 }
+
+export const dynamic = "force-dynamic";

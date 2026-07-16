@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { GraduationCap } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { isSupabaseConfigured } from "@/lib/env";
 import {
   Card,
   CardContent,
@@ -12,10 +13,13 @@ import { Button } from "@/components/ui/button";
 import { ResetPasswordForm } from "./reset-password-form";
 
 export default async function ResetPasswordPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let user = null;
+  if (isSupabaseConfigured()) {
+    const supabase = await createClient();
+    ({
+      data: { user },
+    } = await supabase.auth.getUser());
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-4">
@@ -48,3 +52,5 @@ export default async function ResetPasswordPage() {
     </div>
   );
 }
+
+export const dynamic = "force-dynamic";

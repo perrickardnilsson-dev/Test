@@ -19,7 +19,11 @@ export async function GET(request: Request) {
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(new URL(next, origin));
+      const dest =
+        next && next !== "/"
+          ? next
+          : await postConfirmDestination(supabase);
+      return NextResponse.redirect(new URL(dest, origin));
     }
   }
 
@@ -29,11 +33,34 @@ export async function GET(request: Request) {
       token_hash: tokenHash,
     });
     if (!error) {
-      return NextResponse.redirect(new URL(next, origin));
+      const dest =
+        type === "signup" || type === "email"
+          ? await postConfirmDestination(supabase)
+          : next;
+      return NextResponse.redirect(new URL(dest, origin));
     }
   }
 
   return NextResponse.redirect(
     new URL("/logga-in?fel=ogiltig-lank", origin),
   );
+}
+
+/** Efter e-postbekräftelse: skicka till rätt arbetsyta utifrån profilen. */
+async function postConfirmDestination(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+): Promise<string> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return "/logga-in";
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, onboarded")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.onboarded === false) return "/valj-roll";
+  return profile?.role === "teacher" ? "/larare" : "/elev";
 }

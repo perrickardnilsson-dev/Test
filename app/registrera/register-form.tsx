@@ -42,10 +42,14 @@ export function RegisterForm() {
     setLoading(true);
     const supabase = createClient();
 
+    const next = role === "teacher" ? "/larare" : "/elev";
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { role, name } },
+      options: {
+        data: { role, name },
+        emailRedirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent(next)}`,
+      },
     });
 
     if (error || !data.user) {
@@ -79,7 +83,7 @@ export function RegisterForm() {
 
     if (data.session) {
       toast({ variant: "success", title: "Kontot är skapat!" });
-      router.push(role === "teacher" ? "/larare" : "/elev");
+      router.push("/auth/efter-inloggning");
       router.refresh();
     } else {
       toast({
@@ -163,7 +167,7 @@ export function RegisterForm() {
             {loading ? "Skapar konto…" : "Skapa konto"}
           </Button>
           <OrDivider />
-          <GoogleButton />
+          <GoogleButton next="/auth/efter-inloggning" />
           <p className="text-xs text-muted-foreground text-center">
             Med Google väljer du roll (lärare/elev) direkt efter inloggningen.
           </p>

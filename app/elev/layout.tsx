@@ -19,3 +19,5 @@ export default async function StudentLayout({
     </AppShell>
   );
 }
+
+export const dynamic = "force-dynamic";

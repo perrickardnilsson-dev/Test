@@ -1,15 +1,18 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { getSupabaseEnv } from "@/lib/env";
 
 type CookieToSet = { name: string; value: string; options?: CookieOptions };
 
 export async function createClient() {
-  const cookieStore = await cookies();
+  const env = getSupabaseEnv();
+  if (!env) {
+    throw new Error("SUPABASE_NOT_CONFIGURED");
+  }
 
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
+  const cookieStore = cookies();
+
+  return createServerClient(env.url, env.anonKey, {
       cookies: {
         getAll() {
           return cookieStore.getAll();
@@ -35,10 +38,14 @@ export async function createClient() {
  * exponeras mot klienten.
  */
 export function createServiceClient() {
+  const env = getSupabaseEnv();
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  if (!env || !serviceKey) {
+    throw new Error("SUPABASE_NOT_CONFIGURED");
+  }
+
   const { createClient: createSbClient } = require("@supabase/supabase-js");
-  return createSbClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false, autoRefreshToken: false } },
-  );
+  return createSbClient(env.url, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
 }

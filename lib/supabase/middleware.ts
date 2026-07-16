@@ -1,15 +1,26 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { getSupabaseEnv } from "@/lib/env";
 
 type CookieToSet = { name: string; value: string; options?: CookieOptions };
 
 export async function updateSession(request: NextRequest) {
+  const path = request.nextUrl.pathname;
+
+  if (path.startsWith("/konfiguration")) {
+    return NextResponse.next({ request });
+  }
+
+  const env = getSupabaseEnv();
+  if (!env) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/konfiguration";
+    return NextResponse.redirect(url);
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
+  const supabase = createServerClient(env.url, env.anonKey, {
       cookies: {
         getAll() {
           return request.cookies.getAll();
@@ -27,13 +38,25 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let user = null;
+  try {
+    ({
+      data: { user },
+    } = await supabase.auth.getUser());
+  } catch {
+    const url = request.nextUrl.clone();
+    url.pathname = "/konfiguration";
+    url.searchParams.set("fel", "supabase");
+    return NextResponse.redirect(url);
+  }
 
-  const path = request.nextUrl.pathname;
+  const hasAuthMessage = request.nextUrl.searchParams.has("fel");
   const isAuthPage =
-    path.startsWith("/logga-in") || path.startsWith("/registrera");
+    (path.startsWith("/logga-in") || path.startsWith("/registrera")) &&
+    !hasAuthMessage;
+  const isPostAuth =
+    path.startsWith("/auth/efter-inloggning") ||
+    path.startsWith("/valj-roll");
   const isProtected =
     path.startsWith("/larare") || path.startsWith("/elev");
 
@@ -46,7 +69,13 @@ export async function updateSession(request: NextRequest) {
 
   if (user && isAuthPage) {
     const url = request.nextUrl.clone();
-    url.pathname = "/";
+    url.pathname = "/auth/efter-inloggning";
+    return NextResponse.redirect(url);
+  }
+
+  if (user && path === "/" && !isPostAuth) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/efter-inloggning";
     return NextResponse.redirect(url);
   }
 

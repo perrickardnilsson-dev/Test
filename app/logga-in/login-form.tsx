@@ -26,6 +26,8 @@ export function LoginForm() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const invalidLink = searchParams.get("fel") === "ogiltig-lank";
+  const expiredLink = searchParams.get("fel") === "utgangen-lank";
+  const missingProfile = searchParams.get("fel") === "saknar-profil";
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -46,17 +48,12 @@ export function LoginForm() {
       return;
     }
 
-    const { data } = await supabase.auth.getUser();
-    let dest = searchParams.get("next");
-    if (!dest && data.user) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", data.user.id)
-        .single();
-      dest = profile?.role === "teacher" ? "/larare" : "/elev";
-    }
-    router.push(dest || "/");
+    const next = searchParams.get("next");
+    router.push(
+      next && next.startsWith("/")
+        ? `/auth/efter-inloggning?next=${encodeURIComponent(next)}`
+        : "/auth/efter-inloggning",
+    );
     router.refresh();
   }
 
@@ -74,6 +71,23 @@ export function LoginForm() {
             <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
               Länken var ogiltig eller har gått ut. Logga in eller begär en ny
               återställningslänk via &quot;Glömt lösenord?&quot;.
+            </p>
+          )}
+          {expiredLink && (
+            <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+              Bekräftelselänken har gått ut eller redan använts (t.ex. om
+              mejlappen förhandsvisade länken). Registrera dig igen, eller stäng
+              av e-postbekräftelse i Supabase under Authentication → Providers
+              → Email om du testar lokalt.
+            </p>
+          )}
+          {missingProfile && (
+            <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+              Du är inloggad men din användarprofil saknas i databasen. Det
+              händer om du registrerade dig innan databasen var skapad. Kör{" "}
+              <code className="text-xs">supabase/setup.sql</code> i Supabase SQL
+              Editor och registrera dig igen, eller be administratören skapa
+              profilen.
             </p>
           )}
           <div className="space-y-2">
@@ -112,7 +126,13 @@ export function LoginForm() {
             {loading ? "Loggar in…" : "Logga in"}
           </Button>
           <OrDivider />
-          <GoogleButton next={searchParams.get("next") ?? "/"} />
+          <GoogleButton
+            next={
+              searchParams.get("next")
+                ? `/auth/efter-inloggning?next=${encodeURIComponent(searchParams.get("next")!)}`
+                : "/auth/efter-inloggning"
+            }
+          />
           <p className="text-sm text-muted-foreground text-center">
             Har du inget konto?{" "}
             <Link href="/registrera" className="text-primary hover:underline">
