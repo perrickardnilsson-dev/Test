@@ -154,11 +154,6 @@ export default async function KonfigurationPage({
             </section>
 
             {supabaseOk && dbCheck?.ok && (
-<<<<<<< HEAD
-              <Button asChild className="w-full">
-                <Link href="/">Fortsätt till startsidan</Link>
-              </Button>
-=======
               <div className="space-y-3">
                 <Button asChild className="w-full">
                   <Link href="/">Fortsätt till startsidan</Link>
@@ -169,7 +164,6 @@ export default async function KonfigurationPage({
                   </Link>
                 </Button>
               </div>
->>>>>>> cursor/no-lararplattform-57ec
             )}
           </CardContent>
         </Card>
