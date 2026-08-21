@@ -60,6 +60,43 @@ import {
 import { seedRecallDemo } from "./services/recall-demo";
 import { requireOrgAccess } from "./lib/org-context";
 import { StockPostingError } from "./domain/stock-posting";
+import { BomError } from "./domain/bom";
+import { MrpError } from "./domain/mrp";
+import {
+  createBomSchema,
+  createDemandLineSchema,
+  createSupplyLineSchema,
+  deleteBomLineSchema,
+  runMrpSchema,
+  updateBomSchema,
+  updateSuggestionStatusSchema,
+  upsertBomLineSchema,
+} from "./domain/planning-schemas";
+import {
+  createBom,
+  deleteBomLine,
+  getBomTree,
+  getBomWithLines,
+  listBoms,
+  updateBom,
+  upsertBomLine,
+} from "./services/bom";
+import {
+  createDemandLine,
+  createSupplyLine,
+  executeNetRequirementRun,
+  listDemandLines,
+  listNetRequirementRuns,
+  listPlanningSuggestions,
+  listSupplyLines,
+  seedMrpDemo,
+  updateSuggestionStatuses,
+} from "./services/mrp";
+
+function revalidatePlanning(orgSlug: string) {
+  revalidatePath(`/${orgSlug}/strukturer`);
+  revalidatePath(`/${orgSlug}/planering`);
+}
 
 export async function listPartsAction(orgSlug: string, filter: unknown) {
   const ctx = await requireOrgAccess(orgSlug);
@@ -352,5 +389,158 @@ export async function seedRecallDemoAction(orgSlug: string) {
   const ctx = await requireOrgAccess(orgSlug);
   const result = await seedRecallDemo(ctx.organizationId, ctx.userId);
   revalidateTraceability(orgSlug);
+  return result;
+}
+
+export async function listBomsAction(orgSlug: string) {
+  const ctx = await requireOrgAccess(orgSlug);
+  return listBoms(ctx.organizationId);
+}
+
+export async function getBomAction(orgSlug: string, bomId: string) {
+  const ctx = await requireOrgAccess(orgSlug);
+  return getBomWithLines(ctx.organizationId, bomId);
+}
+
+export async function getBomTreeAction(orgSlug: string, parentPartId: string) {
+  const ctx = await requireOrgAccess(orgSlug);
+  return getBomTree(ctx.organizationId, parentPartId);
+}
+
+export async function createBomAction(orgSlug: string, raw: unknown) {
+  const ctx = await requireOrgAccess(orgSlug);
+  try {
+    const input = createBomSchema.parse(raw);
+    const created = await createBom(ctx.organizationId, ctx.userId, input);
+    revalidatePlanning(orgSlug);
+    return { id: created.id };
+  } catch (err) {
+    if (err instanceof BomError) throw new Error(err.message);
+    throw err;
+  }
+}
+
+export async function updateBomAction(orgSlug: string, raw: unknown) {
+  const ctx = await requireOrgAccess(orgSlug);
+  try {
+    const input = updateBomSchema.parse(raw);
+    const updated = await updateBom(ctx.organizationId, input);
+    revalidatePlanning(orgSlug);
+    return { id: updated.id, status: updated.status };
+  } catch (err) {
+    if (err instanceof BomError) throw new Error(err.message);
+    throw err;
+  }
+}
+
+export async function upsertBomLineAction(orgSlug: string, raw: unknown) {
+  const ctx = await requireOrgAccess(orgSlug);
+  try {
+    const input = upsertBomLineSchema.parse(raw);
+    const row = await upsertBomLine(ctx.organizationId, input);
+    revalidatePlanning(orgSlug);
+    return { id: row.id };
+  } catch (err) {
+    if (err instanceof BomError) throw new Error(err.message);
+    throw err;
+  }
+}
+
+export async function deleteBomLineAction(orgSlug: string, raw: unknown) {
+  const ctx = await requireOrgAccess(orgSlug);
+  try {
+    const input = deleteBomLineSchema.parse(raw);
+    await deleteBomLine(ctx.organizationId, input.lineId);
+    revalidatePlanning(orgSlug);
+    return { ok: true };
+  } catch (err) {
+    if (err instanceof BomError) throw new Error(err.message);
+    throw err;
+  }
+}
+
+export async function listDemandLinesAction(orgSlug: string) {
+  const ctx = await requireOrgAccess(orgSlug);
+  return listDemandLines(ctx.organizationId);
+}
+
+export async function listSupplyLinesAction(orgSlug: string) {
+  const ctx = await requireOrgAccess(orgSlug);
+  return listSupplyLines(ctx.organizationId);
+}
+
+export async function createDemandLineAction(orgSlug: string, raw: unknown) {
+  const ctx = await requireOrgAccess(orgSlug);
+  const input = createDemandLineSchema.parse(raw);
+  const created = await createDemandLine(
+    ctx.organizationId,
+    ctx.userId,
+    input,
+  );
+  revalidatePlanning(orgSlug);
+  return { id: created.id };
+}
+
+export async function createSupplyLineAction(orgSlug: string, raw: unknown) {
+  const ctx = await requireOrgAccess(orgSlug);
+  const input = createSupplyLineSchema.parse(raw);
+  const created = await createSupplyLine(
+    ctx.organizationId,
+    ctx.userId,
+    input,
+  );
+  revalidatePlanning(orgSlug);
+  return { id: created.id };
+}
+
+export async function runNetRequirementAction(orgSlug: string, raw?: unknown) {
+  const ctx = await requireOrgAccess(orgSlug);
+  try {
+    const input = runMrpSchema.parse(raw ?? {});
+    const result = await executeNetRequirementRun(
+      ctx.organizationId,
+      ctx.userId,
+      input.asOfDate,
+    );
+    revalidatePlanning(orgSlug);
+    return result;
+  } catch (err) {
+    if (err instanceof MrpError || err instanceof BomError) {
+      throw new Error(err.message);
+    }
+    throw err;
+  }
+}
+
+export async function listNetRequirementRunsAction(orgSlug: string) {
+  const ctx = await requireOrgAccess(orgSlug);
+  return listNetRequirementRuns(ctx.organizationId);
+}
+
+export async function listPlanningSuggestionsAction(
+  orgSlug: string,
+  runId?: string,
+) {
+  const ctx = await requireOrgAccess(orgSlug);
+  return listPlanningSuggestions(ctx.organizationId, runId);
+}
+
+export async function updateSuggestionsAction(orgSlug: string, raw: unknown) {
+  const ctx = await requireOrgAccess(orgSlug);
+  const input = updateSuggestionStatusSchema.parse(raw);
+  const updated = await updateSuggestionStatuses(
+    ctx.organizationId,
+    input.suggestionIds,
+    input.status,
+  );
+  revalidatePlanning(orgSlug);
+  return { count: updated.length };
+}
+
+export async function seedMrpDemoAction(orgSlug: string) {
+  const ctx = await requireOrgAccess(orgSlug);
+  const result = await seedMrpDemo(ctx.organizationId, ctx.userId);
+  revalidatePlanning(orgSlug);
+  revalidatePath(`/${orgSlug}/artiklar`);
   return result;
 }

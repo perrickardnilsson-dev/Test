@@ -26,6 +26,14 @@ Modulen som byggs på djupet.
 
 Server actions i `actions.ts` (anropas från UI).
 
+### Fas 5 — BOM & nettobehov
+- `listBoms` / `getBomWithLines` / `getBomTree` / `createBom` / `updateBom`
+- `upsertBomLine` / `deleteBomLine` / `recalculateLowLevelCodes`
+- `listDemandLines` / `listSupplyLines` / `createDemandLine` / `createSupplyLine`
+- `executeNetRequirementRun` / `listNetRequirementRuns` / `listPlanningSuggestions`
+- `updateSuggestionStatuses` / `seedMrpDemo`
+- Domän: `calculateLowLevelCodes`, `buildBomTree`, `explodeBomLevel`, `runMrp`, `applyLotSizing`
+
 ## Schema
 
 Ägs av denna modul (`schema.ts`):
@@ -42,6 +50,12 @@ Server actions i `actions.ts` (anropas från UI).
 | `genealogy_edge` | Spårbarhetsgraf |
 | `stock_balance` | Materialiserat saldo (endast via bokföring) |
 | `stock_transaction` | Oföränderlig huvudbok |
+| `bom` | Artikelstruktur (revision/status) |
+| `bom_line` | BOM-komponentrader |
+| `demand_line` | Tidsatta behov för MRP |
+| `supply_line` | Tidsatt tillgång för MRP |
+| `net_requirement_run` | NBK-/MRP-körning |
+| `planning_suggestion` | Förslag med pegging |
 
 Övriga moduler får **inte** importera tabellerna direkt — använd events eller
 publika service-funktioner.
@@ -66,3 +80,5 @@ Uttag sker till aktuellt snittpris. FIFO kan komma senare.
 - `/{org}/batcher` — batchregister
 - `/{org}/individer` — serienummer
 - `/{org}/sparbarhet` — spårning bakåt/framåt + återkallningsdemo
+- `/{org}/strukturer` — BOM-redigerare med trädvy
+- `/{org}/planering` — NBK, förslag, pegging, bulk acceptera/förkasta

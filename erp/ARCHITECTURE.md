@@ -76,6 +76,17 @@ Domänlogik i `modules/inventory/domain/genealogy.ts` (Vitest).
 - CSV-import (`partNumber,description,unit,type,...`)
 - Schema och services i `/modules/inventory` — övriga moduler importerar inte tabellerna
 
+
+## BOM & nettobehov (Fas 5)
+
+- Artikelstruktur (`bom` / `bom_line`) med revision och status
+- Low-level code per artikel för nivåvis MRP
+- Generiska `demand_line` / `supply_line` så NBK fungerar innan Sälj/Inköp
+- `executeNetRequirementRun()` → `planning_suggestion` med pegging
+- UI: Strukturer + Planering (bulk acceptera/förkasta)
+
+Domänlogik i `modules/inventory/domain/bom.ts` och `mrp.ts` (Vitest, ≥15 fall).
+
 ## Faser
 
 Se `.cursor/rules/project.md` för fasordning (0–8). Detta dokument uppdateras

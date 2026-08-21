@@ -61,6 +61,16 @@ export const inventoryManifest: ModuleManifest = {
       label: "Spårbarhet",
       href: "sparbarhet",
     },
+    {
+      id: "inventory.boms",
+      label: "Strukturer",
+      href: "strukturer",
+    },
+    {
+      id: "inventory.planning",
+      label: "Planering",
+      href: "planering",
+    },
   ],
   permissions: [
     {
@@ -78,6 +88,18 @@ export const inventoryManifest: ModuleManifest = {
     {
       id: "inventory.stock.write",
       label: "Bokföra lagerrörelser",
+    },
+    {
+      id: "inventory.bom.read",
+      label: "Läsa strukturer",
+    },
+    {
+      id: "inventory.bom.write",
+      label: "Ändra strukturer",
+    },
+    {
+      id: "inventory.planning.run",
+      label: "Köra nettobehov",
     },
   ],
   schema: inventorySchema,

@@ -111,6 +111,8 @@ export const part = pgTable(
     planningMethod: planningMethodEnum("planning_method")
       .notNull()
       .default("mrp"),
+    /** Djupaste BOM-nivå; beräknas vid strukturändring / NBK. */
+    lowLevelCode: integer("low_level_code").notNull().default(0),
     traceabilityMode: traceabilityModeEnum("traceability_mode")
       .notNull()
       .default("none"),
@@ -127,6 +129,222 @@ export const part = pgTable(
   },
   (t) => [
     uniqueIndex("part_org_number_uidx").on(t.organizationId, t.partNumber),
+  ],
+);
+
+export const bomStatusEnum = pgEnum("bom_status", [
+  "draft",
+  "active",
+  "obsolete",
+]);
+
+/**
+ * Artikelstruktur (BOM) — hör till en tillverkad/fantom-artikel.
+ */
+export const bom = pgTable(
+  "bom",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    parentPartId: uuid("parent_part_id").notNull(),
+    revision: text("revision").notNull().default("A"),
+    validFrom: timestamp("valid_from", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    status: bomStatusEnum("status").notNull().default("draft"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdBy: text("created_by"),
+  },
+  (t) => [
+    uniqueIndex("bom_org_parent_revision_uidx").on(
+      t.organizationId,
+      t.parentPartId,
+      t.revision,
+    ),
+    index("bom_parent_idx").on(t.parentPartId),
+  ],
+);
+
+/**
+ * BOM-rad — komponent i en struktur.
+ */
+export const bomLine = pgTable(
+  "bom_line",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    bomId: uuid("bom_id").notNull(),
+    componentPartId: uuid("component_part_id").notNull(),
+    quantityPer: numeric("quantity_per", { precision: 18, scale: 4 })
+      .notNull()
+      .default("1"),
+    scrapPercent: numeric("scrap_percent", { precision: 8, scale: 4 })
+      .notNull()
+      .default("0"),
+    position: integer("position").notNull().default(10),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("bom_line_bom_component_uidx").on(t.bomId, t.componentPartId),
+    index("bom_line_component_idx").on(t.componentPartId),
+  ],
+);
+
+export const demandSourceTypeEnum = pgEnum("demand_source_type", [
+  "customer_order",
+  "forecast",
+  "dependent",
+  "manual",
+]);
+
+export const supplySourceTypeEnum = pgEnum("supply_source_type", [
+  "purchase_order",
+  "manufacturing_order",
+  "stock",
+  "manual",
+]);
+
+export const planningLineStatusEnum = pgEnum("planning_line_status", [
+  "open",
+  "closed",
+  "cancelled",
+]);
+
+/**
+ * Generiskt tidsatt behov — så MRP fungerar innan Sälj-modulen finns.
+ */
+export const demandLine = pgTable(
+  "demand_line",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    partId: uuid("part_id").notNull(),
+    quantity: numeric("quantity", { precision: 18, scale: 4 }).notNull(),
+    dueDate: timestamp("due_date", { withTimezone: true }).notNull(),
+    sourceType: demandSourceTypeEnum("source_type").notNull().default("manual"),
+    sourceId: text("source_id"),
+    status: planningLineStatusEnum("status").notNull().default("open"),
+    note: text("note"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdBy: text("created_by"),
+  },
+  (t) => [
+    index("demand_line_part_idx").on(t.partId),
+    index("demand_line_due_idx").on(t.dueDate),
+    index("demand_line_org_idx").on(t.organizationId),
+  ],
+);
+
+/**
+ * Generisk tidsatt tillgång — öppna IO/TO innan Inköp/Tillverkning finns.
+ */
+export const supplyLine = pgTable(
+  "supply_line",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    partId: uuid("part_id").notNull(),
+    quantity: numeric("quantity", { precision: 18, scale: 4 }).notNull(),
+    dueDate: timestamp("due_date", { withTimezone: true }).notNull(),
+    sourceType: supplySourceTypeEnum("source_type").notNull().default("manual"),
+    sourceId: text("source_id"),
+    status: planningLineStatusEnum("status").notNull().default("open"),
+    note: text("note"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdBy: text("created_by"),
+  },
+  (t) => [
+    index("supply_line_part_idx").on(t.partId),
+    index("supply_line_due_idx").on(t.dueDate),
+    index("supply_line_org_idx").on(t.organizationId),
+  ],
+);
+
+export const netRequirementRunStatusEnum = pgEnum("net_requirement_run_status", [
+  "running",
+  "completed",
+  "failed",
+]);
+
+/**
+ * En nettobehovskörning (NBK / MRP-run).
+ */
+export const netRequirementRun = pgTable(
+  "net_requirement_run",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    runAt: timestamp("run_at", { withTimezone: true }).notNull().defaultNow(),
+    asOfDate: timestamp("as_of_date", { withTimezone: true }).notNull(),
+    status: netRequirementRunStatusEnum("status").notNull().default("running"),
+    message: text("message"),
+    suggestionCount: integer("suggestion_count").notNull().default(0),
+    createdBy: text("created_by"),
+  },
+  (t) => [index("net_requirement_run_org_idx").on(t.organizationId)],
+);
+
+export const suggestionTypeEnum = pgEnum("suggestion_type", [
+  "purchase",
+  "manufacture",
+]);
+
+export const suggestionStatusEnum = pgEnum("suggestion_status", [
+  "open",
+  "accepted",
+  "rejected",
+]);
+
+/**
+ * Planeringsförslag från en NBK, med pegging (varför).
+ */
+export const planningSuggestion = pgTable(
+  "planning_suggestion",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    runId: uuid("run_id").notNull(),
+    partId: uuid("part_id").notNull(),
+    suggestionType: suggestionTypeEnum("suggestion_type").notNull(),
+    quantity: numeric("quantity", { precision: 18, scale: 4 }).notNull(),
+    dueDate: timestamp("due_date", { withTimezone: true }).notNull(),
+    orderDate: timestamp("order_date", { withTimezone: true }).notNull(),
+    isLate: boolean("is_late").notNull().default(false),
+    status: suggestionStatusEnum("status").notNull().default("open"),
+    pegging: jsonb("pegging")
+      .notNull()
+      .$type<
+        Array<{
+          demandSourceType: string;
+          demandSourceId: string | null;
+          demandQuantity: number;
+          demandDueDate: string;
+          explanation: string;
+        }>
+      >()
+      .default([]),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("planning_suggestion_run_idx").on(t.runId),
+    index("planning_suggestion_part_idx").on(t.partId),
+    index("planning_suggestion_org_idx").on(t.organizationId),
   ],
 );
 
@@ -427,4 +645,10 @@ export const inventorySchema = {
   genealogyEdge,
   stockBalance,
   stockTransaction,
+  bom,
+  bomLine,
+  demandLine,
+  supplyLine,
+  netRequirementRun,
+  planningSuggestion,
 };
