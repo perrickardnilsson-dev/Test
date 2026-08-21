@@ -1,4 +1,5 @@
 import {
+  boolean,
   numeric,
   pgEnum,
   pgTable,
@@ -8,6 +9,7 @@ import {
   uuid,
   integer,
   jsonb,
+  index,
 } from "drizzle-orm/pg-core";
 
 export const partTypeEnum = pgEnum("part_type", [
@@ -150,8 +152,166 @@ export const savedPartView = pgTable("saved_part_view", {
     .defaultNow(),
 });
 
+export const locationTypeEnum = pgEnum("location_type", [
+  "picking",
+  "bulk",
+  "quarantine",
+  "wip",
+]);
+
+export const stockTransactionTypeEnum = pgEnum("stock_transaction_type", [
+  "receipt",
+  "issue",
+  "transfer",
+  "adjustment",
+  "count",
+  "scrap",
+]);
+
+export const stockReferenceTypeEnum = pgEnum("stock_reference_type", [
+  "purchase_order",
+  "manufacturing_order",
+  "customer_order",
+  "manual",
+  "count",
+]);
+
+/**
+ * Lagerställe — fysisk lagerbyggnad/enhet.
+ */
+export const warehouse = pgTable(
+  "warehouse",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    code: text("code").notNull(),
+    name: text("name").notNull(),
+    allowNegativeStock: boolean("allow_negative_stock").notNull().default(false),
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdBy: text("created_by"),
+  },
+  (t) => [
+    uniqueIndex("warehouse_org_code_uidx").on(t.organizationId, t.code),
+  ],
+);
+
+/**
+ * Lagerplats — hylla/plats inom ett lagerställe.
+ */
+export const stockLocation = pgTable(
+  "stock_location",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    warehouseId: uuid("warehouse_id").notNull(),
+    code: text("code").notNull(),
+    name: text("name"),
+    zone: text("zone"),
+    pickSequence: integer("pick_sequence").notNull().default(0),
+    type: locationTypeEnum("type").notNull().default("picking"),
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdBy: text("created_by"),
+  },
+  (t) => [
+    uniqueIndex("stock_location_org_wh_code_uidx").on(
+      t.organizationId,
+      t.warehouseId,
+      t.code,
+    ),
+    index("stock_location_warehouse_idx").on(t.warehouseId),
+  ],
+);
+
+/**
+ * Lagersaldo — materialiserad; uppdateras enbart via postStockTransaction.
+ * Unik per artikel + plats (batch läggs till i Fas 4).
+ */
+export const stockBalance = pgTable(
+  "stock_balance",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    partId: uuid("part_id").notNull(),
+    locationId: uuid("location_id").notNull(),
+    batchId: uuid("batch_id"),
+    quantity: numeric("quantity", { precision: 18, scale: 4 })
+      .notNull()
+      .default("0"),
+    reservedQuantity: numeric("reserved_quantity", { precision: 18, scale: 4 })
+      .notNull()
+      .default("0"),
+    averageCost: numeric("average_cost", { precision: 18, scale: 4 })
+      .notNull()
+      .default("0"),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("stock_balance_org_part_loc_uidx").on(
+      t.organizationId,
+      t.partId,
+      t.locationId,
+    ),
+    index("stock_balance_part_idx").on(t.partId),
+    index("stock_balance_location_idx").on(t.locationId),
+  ],
+);
+
+/**
+ * Lagertransaktion — oföränderlig huvudbok. Raderas/ändras aldrig.
+ */
+export const stockTransaction = pgTable(
+  "stock_transaction",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    type: stockTransactionTypeEnum("type").notNull(),
+    partId: uuid("part_id").notNull(),
+    /** Tecken avgör riktning: + in, − ut. Flytt använder positiv qty + from/to. */
+    quantity: numeric("quantity", { precision: 18, scale: 4 }).notNull(),
+    fromLocationId: uuid("from_location_id"),
+    toLocationId: uuid("to_location_id"),
+    batchId: uuid("batch_id"),
+    serialUnitId: uuid("serial_unit_id"),
+    unitCost: numeric("unit_cost", { precision: 18, scale: 4 })
+      .notNull()
+      .default("0"),
+    referenceType: stockReferenceTypeEnum("reference_type")
+      .notNull()
+      .default("manual"),
+    referenceId: text("reference_id"),
+    postedAt: timestamp("posted_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    postedBy: text("posted_by"),
+    note: text("note"),
+  },
+  (t) => [
+    index("stock_transaction_part_idx").on(t.partId),
+    index("stock_transaction_posted_idx").on(t.postedAt),
+    index("stock_transaction_org_idx").on(t.organizationId),
+  ],
+);
+
 export const inventorySchema = {
   partGroup,
   part,
   savedPartView,
+  warehouse,
+  stockLocation,
+  stockBalance,
+  stockTransaction,
 };

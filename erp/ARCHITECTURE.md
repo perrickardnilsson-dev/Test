@@ -45,10 +45,18 @@ glömmer en `where`. Isolering bevisas av `tests/tenant-isolation.test.ts`
 - Modulregistret (`bootstrapModules`) bygger sidomeny och ⌘K-kommandopalett
 - Stubbmoduler syns som "Kommer snart"
 
-## Lagerbokföring (kommande Fas 3)
+## Lagerbokföring (Fas 3)
 
 All saldoförändring går genom `postStockTransaction()`. `stockBalance`
 uppdateras aldrig direkt. Transaktioner är oföränderliga.
+
+- Lagerställen (`warehouse`) med valfri negativt-saldo-flagga
+- Lagerplatser (`stockLocation`: plock/bulk/karantän/PIA)
+- Saldo per artikel + plats med **vägt genomsnittspris**
+- Manuell inleverans, utleverans/skrot och flytt
+- Transaktionshistorik (huvudbok)
+
+Domänlogik i `modules/inventory/domain/stock-posting.ts` (Vitest).
 
 ## Artikelregister (Fas 2)
 

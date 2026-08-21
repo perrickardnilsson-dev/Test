@@ -8,6 +8,17 @@ import {
   savePartViewSchema,
   updatePartSchema,
 } from "./domain/part-schemas";
+import {
+  createStockLocationSchema,
+  createWarehouseSchema,
+  manualIssueSchema,
+  manualReceiptSchema,
+  manualTransferSchema,
+  stockBalanceFilterSchema,
+  stockTransactionFilterSchema,
+  updateStockLocationSchema,
+  updateWarehouseSchema,
+} from "./domain/stock-schemas";
 import { csvRowToCreateInput, parsePartsCsv } from "./domain/csv";
 import {
   createPart,
@@ -21,7 +32,21 @@ import {
   savePartView,
   updatePart,
 } from "./services/parts";
+import {
+  createStockLocation,
+  createWarehouse,
+  listStockLocations,
+  listWarehouses,
+  updateStockLocation,
+  updateWarehouse,
+} from "./services/warehouses";
+import {
+  listStockBalances,
+  listStockTransactions,
+  postStockTransaction,
+} from "./services/stock";
 import { requireOrgAccess } from "./lib/org-context";
+import { StockPostingError } from "./domain/stock-posting";
 
 export async function listPartsAction(orgSlug: string, filter: unknown) {
   const ctx = await requireOrgAccess(orgSlug);
@@ -106,4 +131,133 @@ export async function importPartsCsvAction(orgSlug: string, csvText: string) {
     created: result.created,
     errors: [...parsed.errors, ...result.errors],
   };
+}
+
+function revalidateStock(orgSlug: string) {
+  revalidatePath(`/${orgSlug}/lager`);
+  revalidatePath(`/${orgSlug}/lager/historik`);
+  revalidatePath(`/${orgSlug}/lager/rorelse`);
+  revalidatePath(`/${orgSlug}/lagerstallen`);
+  revalidatePath(`/${orgSlug}/lagerplatser`);
+}
+
+export async function listWarehousesAction(orgSlug: string) {
+  const ctx = await requireOrgAccess(orgSlug);
+  return listWarehouses(ctx.organizationId);
+}
+
+export async function createWarehouseAction(orgSlug: string, raw: unknown) {
+  const ctx = await requireOrgAccess(orgSlug);
+  const input = createWarehouseSchema.parse(raw);
+  const created = await createWarehouse(ctx.organizationId, ctx.userId, input);
+  revalidateStock(orgSlug);
+  return { id: created.id };
+}
+
+export async function updateWarehouseAction(orgSlug: string, raw: unknown) {
+  const ctx = await requireOrgAccess(orgSlug);
+  const input = updateWarehouseSchema.parse(raw);
+  const updated = await updateWarehouse(ctx.organizationId, input);
+  revalidateStock(orgSlug);
+  return { id: updated.id };
+}
+
+export async function listStockLocationsAction(
+  orgSlug: string,
+  warehouseId?: string | null,
+) {
+  const ctx = await requireOrgAccess(orgSlug);
+  return listStockLocations(ctx.organizationId, warehouseId);
+}
+
+export async function createStockLocationAction(orgSlug: string, raw: unknown) {
+  const ctx = await requireOrgAccess(orgSlug);
+  const input = createStockLocationSchema.parse(raw);
+  const created = await createStockLocation(
+    ctx.organizationId,
+    ctx.userId,
+    input,
+  );
+  revalidateStock(orgSlug);
+  return { id: created.id };
+}
+
+export async function updateStockLocationAction(orgSlug: string, raw: unknown) {
+  const ctx = await requireOrgAccess(orgSlug);
+  const input = updateStockLocationSchema.parse(raw);
+  const updated = await updateStockLocation(ctx.organizationId, input);
+  revalidateStock(orgSlug);
+  return { id: updated.id };
+}
+
+export async function listStockBalancesAction(orgSlug: string, filter: unknown) {
+  const ctx = await requireOrgAccess(orgSlug);
+  const parsed = stockBalanceFilterSchema.parse(filter ?? {});
+  return listStockBalances(ctx.organizationId, parsed);
+}
+
+export async function listStockTransactionsAction(
+  orgSlug: string,
+  filter: unknown,
+) {
+  const ctx = await requireOrgAccess(orgSlug);
+  const parsed = stockTransactionFilterSchema.parse(filter ?? {});
+  return listStockTransactions(ctx.organizationId, parsed);
+}
+
+export async function postManualReceiptAction(orgSlug: string, raw: unknown) {
+  const ctx = await requireOrgAccess(orgSlug);
+  try {
+    const input = manualReceiptSchema.parse(raw);
+    const result = await postStockTransaction(
+      ctx.organizationId,
+      ctx.userId,
+      input,
+    );
+    revalidateStock(orgSlug);
+    return result;
+  } catch (err) {
+    if (err instanceof StockPostingError) {
+      throw new Error(err.message);
+    }
+    throw err;
+  }
+}
+
+export async function postManualIssueAction(orgSlug: string, raw: unknown) {
+  const ctx = await requireOrgAccess(orgSlug);
+  try {
+    const input = manualIssueSchema.parse(raw);
+    const result = await postStockTransaction(
+      ctx.organizationId,
+      ctx.userId,
+      input,
+    );
+    revalidateStock(orgSlug);
+    return result;
+  } catch (err) {
+    if (err instanceof StockPostingError) {
+      throw new Error(err.message);
+    }
+    throw err;
+  }
+}
+
+export async function postManualTransferAction(orgSlug: string, raw: unknown) {
+  const ctx = await requireOrgAccess(orgSlug);
+  try {
+    const input = manualTransferSchema.parse(raw);
+    const result = await postStockTransaction(
+      ctx.organizationId,
+      ctx.userId,
+      input,
+    );
+    revalidateStock(orgSlug);
+    return result;
+  } catch (err) {
+    if (err instanceof StockPostingError) {
+      throw new Error(err.message);
+    }
+    throw err;
+  }
 }

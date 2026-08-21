@@ -22,9 +22,29 @@ export const inventoryManifest: ModuleManifest = {
       href: "varugrupper",
     },
     {
+      id: "inventory.warehouses",
+      label: "Lagerställen",
+      href: "lagerstallen",
+    },
+    {
+      id: "inventory.locations",
+      label: "Lagerplatser",
+      href: "lagerplatser",
+    },
+    {
       id: "inventory.stock",
       label: "Lagersaldo",
       href: "lager",
+    },
+    {
+      id: "inventory.movements",
+      label: "Lagerrörelse",
+      href: "lager/rorelse",
+    },
+    {
+      id: "inventory.history",
+      label: "Transaktioner",
+      href: "lager/historik",
     },
   ],
   permissions: [
@@ -35,6 +55,14 @@ export const inventoryManifest: ModuleManifest = {
     {
       id: "inventory.part.write",
       label: "Ändra artiklar",
+    },
+    {
+      id: "inventory.stock.read",
+      label: "Läsa lagersaldo",
+    },
+    {
+      id: "inventory.stock.write",
+      label: "Bokföra lagerrörelser",
     },
   ],
   schema: inventorySchema,

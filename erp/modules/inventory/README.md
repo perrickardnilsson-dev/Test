@@ -2,13 +2,22 @@
 
 Modulen som byggs på djupet.
 
-## Publikt kontrakt (Fas 2)
+## Publikt kontrakt
 
+### Fas 2 — Artiklar
 - `listParts` / `getPart` / `createPart` / `updatePart`
 - `listPartGroups` / `createPartGroup`
 - `listSavedPartViews` / `savePartView` / `deleteSavedPartView`
 - `createPartsBulk` + CSV-parser i `domain/csv.ts`
-- Server actions i `actions.ts` (anropas från UI)
+
+### Fas 3 — Lager
+- `listWarehouses` / `createWarehouse` / `updateWarehouse`
+- `listStockLocations` / `createStockLocation` / `updateStockLocation`
+- `postStockTransaction` (enda vägen till saldoändring)
+- `listStockBalances` / `listStockTransactions`
+- Domän: `planStockPosting`, `weightedAverageCost`, `applyReservation`
+
+Server actions i `actions.ts` (anropas från UI).
 
 ## Schema
 
@@ -19,9 +28,19 @@ Modulen som byggs på djupet.
 | `part` | Artikelregister |
 | `part_group` | Hierarkiska varugrupper |
 | `saved_part_view` | Sparade listvyer per användare |
+| `warehouse` | Lagerställe |
+| `stock_location` | Lagerplats |
+| `stock_balance` | Materialiserat saldo (endast via bokföring) |
+| `stock_transaction` | Oföränderlig huvudbok |
 
 Övriga moduler får **inte** importera tabellerna direkt — använd events eller
 publika service-funktioner.
+
+## Värdering
+
+Vägt genomsnittspris. Vid inleverans:
+`nyttSnitt = (gammaltVärde + inlevereratVärde) / nyttAntal`.
+Uttag sker till aktuellt snittpris. FIFO kan komma senare.
 
 ## UI
 
@@ -29,3 +48,8 @@ publika service-funktioner.
 - `/{org}/artiklar/ny` — skapa med progressiv avslöjning
 - `/{org}/artiklar/[id]` — redigera
 - `/{org}/varugrupper` — varugruppsregister
+- `/{org}/lagerstallen` — lagerställen
+- `/{org}/lagerplatser` — lagerplatser
+- `/{org}/lager` — lagersaldo
+- `/{org}/lager/rorelse` — manuell in/ut/flytt
+- `/{org}/lager/historik` — transaktionshistorik

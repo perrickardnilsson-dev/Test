@@ -47,5 +47,5 @@ npm run dev            # http://localhost:3001
 - [x] **Fas 0** — Skelett
 - [x] **Fas 1** — Plattform (Better Auth, RLS, modulregister, layout, skapa-org)
 - [x] **Fas 2** — Artikelregister (CRUD, varugrupper, listvy, CSV)
-- [ ] Fas 3 — Lagerstruktur och saldon
+- [x] **Fas 3** — Lagerstruktur och saldon (lagerställen, platser, bokföring, rörelser)
 - [ ] Fas 4–8 — se project rules
