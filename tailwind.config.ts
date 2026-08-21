@@ -4,8 +4,8 @@ const config: Config = {
   darkMode: ["class"],
   content: [
     "./app/**/*.{ts,tsx}",
-    "./components/**/*.{ts,tsx}",
-    "./lib/**/*.{ts,tsx}",
+    "./core/**/*.{ts,tsx}",
+    "./modules/**/*.{ts,tsx}",
   ],
   theme: {
     container: {
@@ -14,6 +14,10 @@ const config: Config = {
       screens: { "2xl": "1400px" },
     },
     extend: {
+      fontFamily: {
+        sans: ["var(--font-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
+        mono: ["var(--font-mono)", "ui-monospace", "monospace"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -54,22 +58,9 @@ const config: Config = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
-      keyframes: {
-        "accordion-down": {
-          from: { height: "0" },
-          to: { height: "var(--radix-accordion-content-height)" },
-        },
-        "accordion-up": {
-          from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: "0" },
-        },
-      },
-      animation: {
-        "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
-      },
     },
   },
   plugins: [require("tailwindcss-animate")],
 };
+
 export default config;

@@ -1,15 +1,20 @@
 import { NextResponse } from "next/server";
-import { checkDatabase, getEnvCheck, isSupabaseConfigured } from "@/lib/env";
+import { checkDatabaseHealth } from "@/core/db/health";
 
-/** Enkel hälsokoll för felsökning i produktion (ingen känslig data). */
+export const dynamic = "force-dynamic";
+
 export async function GET() {
-  const env = getEnvCheck();
-  const db = isSupabaseConfigured() ? await checkDatabase() : null;
+  const database = await checkDatabaseHealth();
+  const status = database.ok ? 200 : 503;
 
-  return NextResponse.json({
-    supabaseConfigured: isSupabaseConfigured(),
-    env,
-    database: db,
-    timestamp: new Date().toISOString(),
-  });
+  return NextResponse.json(
+    {
+      status: database.ok ? "ok" : "degraded",
+      app: "ok",
+      database,
+      phase: 0,
+      timestamp: new Date().toISOString(),
+    },
+    { status },
+  );
 }
