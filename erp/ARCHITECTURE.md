@@ -52,11 +52,21 @@ uppdateras aldrig direkt. Transaktioner är oföränderliga.
 
 - Lagerställen (`warehouse`) med valfri negativt-saldo-flagga
 - Lagerplatser (`stockLocation`: plock/bulk/karantän/PIA)
-- Saldo per artikel + plats med **vägt genomsnittspris**
+- Saldo per artikel + plats (+ batch) med **vägt genomsnittspris**
 - Manuell inleverans, utleverans/skrot och flytt
 - Transaktionshistorik (huvudbok)
 
 Domänlogik i `modules/inventory/domain/stock-posting.ts` (Vitest).
+
+## Spårbarhet (Fas 4)
+
+- Spårbarhetsläge per artikel: `none` | `batch` | `serial`
+- Batchregister och serienummer (individer)
+- Genealogikant (`genealogyEdge`) med `WITH RECURSIVE` åt båda håll
+- Spårningsvy med påverkanssammanfattning
+- Seedad återkallningsdemo (`seedRecallDemo`)
+
+Domänlogik i `modules/inventory/domain/genealogy.ts` (Vitest).
 
 ## Artikelregister (Fas 2)
 
