@@ -45,10 +45,18 @@ glömmer en `where`. Isolering bevisas av `tests/tenant-isolation.test.ts`
 - Modulregistret (`bootstrapModules`) bygger sidomeny och ⌘K-kommandopalett
 - Stubbmoduler syns som "Kommer snart"
 
-## Lagerbokföring (kommande)
+## Lagerbokföring (kommande Fas 3)
 
 All saldoförändring går genom `postStockTransaction()`. `stockBalance`
 uppdateras aldrig direkt. Transaktioner är oföränderliga.
+
+## Artikelregister (Fas 2)
+
+- CRUD med progressiv avslöjning (fyra basfält + "Fler inställningar")
+- Varugrupper (hierarkiska)
+- Listvy med sök, filter, sparade vyer (TanStack Table)
+- CSV-import (`partNumber,description,unit,type,...`)
+- Schema och services i `/modules/inventory` — övriga moduler importerar inte tabellerna
 
 ## Faser
 
