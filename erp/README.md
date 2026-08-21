@@ -48,4 +48,5 @@ npm run dev            # http://localhost:3001
 - [x] **Fas 1** — Plattform (Better Auth, RLS, modulregister, layout, skapa-org)
 - [x] **Fas 2** — Artikelregister (CRUD, varugrupper, listvy, CSV)
 - [x] **Fas 3** — Lagerstruktur och saldon (lagerställen, platser, bokföring, rörelser)
-- [ ] Fas 4–8 — se project rules
+- [x] **Fas 4** — Batch och individ (spårbarhet, genealogi, återkallningsdemo)
+- [ ] Fas 5–8 — se project rules
