@@ -28,13 +28,22 @@ Regler:
 
 ## Multi-tenancy
 
-Varje kundföretag är en **organisation**. Alla affärstabeller har
-`organizationId`. Databasåtkomst går via `getTenantDb(orgId)`, som sätter
-`app.current_org` i en transaktion. PostgreSQL RLS (Fas 1) filtrerar på den
-sessionvariabeln — säkerhetsnät om appkoden glömmer en `where`.
+Varje kundföretag är en **organisation** (Better Auth organization-plugin).
+Alla affärstabeller har `organizationId`. Databasåtkomst går via
+`getTenantDb(orgId)`, som sätter `app.current_org` i en transaktion.
+PostgreSQL RLS filtrerar på den sessionvariabeln — säkerhetsnät om appkoden
+glömmer en `where`. Isolering bevisas av `tests/tenant-isolation.test.ts`
+(kräver Postgres).
 
 **ESLint:** direkt import av den råa db-klienten (`@/core/db/client`) i
 `/modules` är förbjuden.
+
+## Auth & app-shell (Fas 1)
+
+- Better Auth med e-post/lösenord + organisationer
+- Routes: `/logga-in`, `/registrera`, `/skapa-organisation`, `/{orgSlug}/…`
+- Modulregistret (`bootstrapModules`) bygger sidomeny och ⌘K-kommandopalett
+- Stubbmoduler syns som "Kommer snart"
 
 ## Lagerbokföring (kommande)
 

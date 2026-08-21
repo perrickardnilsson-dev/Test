@@ -4,4 +4,5 @@
  */
 export { getTenantDb } from "./tenant";
 export type { Db } from "./tenant";
-export { platformSchema, healthProbe } from "./schema";
+export { platformSchema, healthProbe, tenantSecret } from "./schema";
+export { checkDatabaseHealth } from "./health";

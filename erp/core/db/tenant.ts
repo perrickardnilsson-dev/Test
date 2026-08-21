@@ -3,7 +3,7 @@ import { db, type Db } from "./client";
 
 /**
  * Tenant-scopad databasåtkomst.
- * Sätter app.current_org för RLS (Fas 1 aktiverar policies).
+ * Sätter app.current_org för RLS (SET LOCAL via set_config(..., true)).
  * All modulkod ska gå via denna funktion.
  */
 export async function getTenantDb(

@@ -10,7 +10,7 @@ export default function HomePage() {
       />
       <div className="relative mx-auto flex min-h-screen max-w-3xl flex-col justify-center px-6 py-16">
         <p className="mb-3 font-mono text-xs tracking-[0.2em] text-muted-foreground uppercase">
-          Pitch-prototyp · Fas 0
+          Pitch-prototyp · Fas 1
         </p>
         <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
           Nordisk tillverknings-ERP
@@ -21,10 +21,13 @@ export default function HomePage() {
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           <Button asChild>
-            <Link href="/health">Systemstatus</Link>
+            <Link href="/logga-in">Logga in</Link>
           </Button>
           <Button asChild variant="outline">
-            <Link href="/api/health">API health</Link>
+            <Link href="/registrera">Skapa konto</Link>
+          </Button>
+          <Button asChild variant="ghost">
+            <Link href="/health">Systemstatus</Link>
           </Button>
         </div>
       </div>

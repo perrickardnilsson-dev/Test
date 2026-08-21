@@ -12,7 +12,7 @@ export async function GET() {
       status: database.ok ? "ok" : "degraded",
       app: "ok",
       database,
-      phase: 0,
+      phase: 1,
       timestamp: new Date().toISOString(),
     },
     { status },

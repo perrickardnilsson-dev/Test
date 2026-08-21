@@ -11,7 +11,7 @@ export default async function HealthPage() {
     <main className="mx-auto max-w-2xl px-6 py-16">
       <h1 className="text-2xl font-semibold tracking-tight">Systemstatus</h1>
       <p className="mt-2 text-muted-foreground">
-        Health check för applikation och databas (Fas 0).
+        Health check för applikation och databas.
       </p>
 
       <dl className="mt-8 space-y-4 border-t border-border pt-6">
@@ -38,11 +38,11 @@ export default async function HealthPage() {
         {!db.ok && db.error ? (
           <div className="rounded-md border border-border bg-muted/50 p-3 text-sm text-muted-foreground">
             <p className="font-medium text-foreground">Databasfel</p>
-            <p className="mt-1 font-mono text-xs break-all">{db.error}</p>
+            <p className="mt-1 break-all font-mono text-xs">{db.error}</p>
             <p className="mt-2">
               Starta lokal Postgres med{" "}
               <code className="font-mono text-xs">npm run db:up</code> (kräver
-              Docker).
+              Docker) och kör migrationer.
             </p>
           </div>
         ) : null}

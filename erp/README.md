@@ -45,6 +45,6 @@ npm run dev            # http://localhost:3001
 ## Fasstatus
 
 - [x] **Fas 0** — Skelett
-- [ ] Fas 1 — Plattform (auth, RLS, modulregister, layout)
+- [x] **Fas 1** — Plattform (Better Auth, RLS, modulregister, layout, skapa-org)
 - [ ] Fas 2 — Artikelregister
 - [ ] Fas 3–8 — se project rules
