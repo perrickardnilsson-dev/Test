@@ -11,6 +11,7 @@ import {
   jsonb,
   index,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 export const partTypeEnum = pgEnum("part_type", [
   "purchased",
@@ -234,9 +235,116 @@ export const stockLocation = pgTable(
   ],
 );
 
+export const batchStatusEnum = pgEnum("batch_status", [
+  "available",
+  "quarantine",
+  "blocked",
+]);
+
+export const serialUnitStatusEnum = pgEnum("serial_unit_status", [
+  "available",
+  "quarantine",
+  "blocked",
+  "consumed",
+  "shipped",
+]);
+
+/**
+ * Batch / charge — grupp av enheter med gemensamt ursprung.
+ */
+export const batch = pgTable(
+  "batch",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    partId: uuid("part_id").notNull(),
+    batchNumber: text("batch_number").notNull(),
+    supplierBatchNumber: text("supplier_batch_number"),
+    productionDate: timestamp("production_date", { withTimezone: true }),
+    expiryDate: timestamp("expiry_date", { withTimezone: true }),
+    certificateRef: text("certificate_ref"),
+    status: batchStatusEnum("status").notNull().default("available"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdBy: text("created_by"),
+  },
+  (t) => [
+    uniqueIndex("batch_org_part_number_uidx").on(
+      t.organizationId,
+      t.partId,
+      t.batchNumber,
+    ),
+    index("batch_part_idx").on(t.partId),
+  ],
+);
+
+/**
+ * Individ / serienummer — enskild spårad enhet.
+ */
+export const serialUnit = pgTable(
+  "serial_unit",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    partId: uuid("part_id").notNull(),
+    serialNumber: text("serial_number").notNull(),
+    batchId: uuid("batch_id"),
+    status: serialUnitStatusEnum("status").notNull().default("available"),
+    currentLocationId: uuid("current_location_id"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdBy: text("created_by"),
+  },
+  (t) => [
+    uniqueIndex("serial_unit_org_part_number_uidx").on(
+      t.organizationId,
+      t.partId,
+      t.serialNumber,
+    ),
+    index("serial_unit_part_idx").on(t.partId),
+    index("serial_unit_batch_idx").on(t.batchId),
+  ],
+);
+
+/**
+ * Genealogikant — spårbarhetsgrafen (förbrukad → producerad).
+ */
+export const genealogyEdge = pgTable(
+  "genealogy_edge",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    consumedBatchId: uuid("consumed_batch_id"),
+    consumedSerialId: uuid("consumed_serial_id"),
+    producedBatchId: uuid("produced_batch_id"),
+    producedSerialId: uuid("produced_serial_id"),
+    quantity: numeric("quantity", { precision: 18, scale: 4 })
+      .notNull()
+      .default("0"),
+    manufacturingOrderRef: text("manufacturing_order_ref"),
+    occurredAt: timestamp("occurred_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdBy: text("created_by"),
+  },
+  (t) => [
+    index("genealogy_edge_consumed_batch_idx").on(t.consumedBatchId),
+    index("genealogy_edge_produced_batch_idx").on(t.producedBatchId),
+    index("genealogy_edge_org_idx").on(t.organizationId),
+  ],
+);
+
 /**
  * Lagersaldo — materialiserad; uppdateras enbart via postStockTransaction.
- * Unik per artikel + plats (batch läggs till i Fas 4).
+ * Unik per artikel + plats + batch (null-batch via coalesce).
  */
 export const stockBalance = pgTable(
   "stock_balance",
@@ -260,13 +368,15 @@ export const stockBalance = pgTable(
       .defaultNow(),
   },
   (t) => [
-    uniqueIndex("stock_balance_org_part_loc_uidx").on(
+    uniqueIndex("stock_balance_org_part_loc_batch_uidx").on(
       t.organizationId,
       t.partId,
       t.locationId,
+      sql`coalesce(${t.batchId}, '00000000-0000-0000-0000-000000000000'::uuid)`,
     ),
     index("stock_balance_part_idx").on(t.partId),
     index("stock_balance_location_idx").on(t.locationId),
+    index("stock_balance_batch_idx").on(t.batchId),
   ],
 );
 
@@ -312,6 +422,9 @@ export const inventorySchema = {
   savedPartView,
   warehouse,
   stockLocation,
+  batch,
+  serialUnit,
+  genealogyEdge,
   stockBalance,
   stockTransaction,
 };

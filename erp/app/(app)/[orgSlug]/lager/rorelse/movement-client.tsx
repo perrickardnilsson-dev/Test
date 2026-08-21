@@ -17,6 +17,7 @@ type PartOption = {
   partNumber: string;
   description: string;
   unit: string;
+  traceabilityMode: "none" | "batch" | "serial";
 };
 
 type LocationOption = {
@@ -26,15 +27,28 @@ type LocationOption = {
   label: string;
 };
 
+type BatchOption = {
+  id: string;
+  partId: string;
+  batchNumber: string;
+  partNumber: string;
+};
+
 type Props = {
   orgSlug: string;
   parts: PartOption[];
   locations: LocationOption[];
+  batches: BatchOption[];
 };
 
 type Mode = "receipt" | "issue" | "transfer";
 
-export function MovementClient({ orgSlug, parts, locations }: Props) {
+export function MovementClient({
+  orgSlug,
+  parts,
+  locations,
+  batches,
+}: Props) {
   const router = useRouter();
   const [mode, setMode] = React.useState<Mode>("receipt");
   const [partId, setPartId] = React.useState(parts[0]?.id ?? "");
@@ -48,11 +62,16 @@ export function MovementClient({ orgSlug, parts, locations }: Props) {
   const [unitCost, setUnitCost] = React.useState("0");
   const [issueType, setIssueType] = React.useState<"issue" | "scrap">("issue");
   const [note, setNote] = React.useState("");
+  const [batchNumber, setBatchNumber] = React.useState("");
+  const [serialNumber, setSerialNumber] = React.useState("");
+  const [batchId, setBatchId] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState<string | null>(null);
   const [pending, setPending] = React.useState(false);
 
   const selectedPart = parts.find((p) => p.id === partId);
+  const partMode = selectedPart?.traceabilityMode ?? "none";
+  const partBatches = batches.filter((b) => b.partId === partId);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -67,6 +86,11 @@ export function MovementClient({ orgSlug, parts, locations }: Props) {
           toLocationId,
           quantity: qty,
           unitCost: Number(unitCost) || 0,
+          batchNumber:
+            partMode === "batch" || partMode === "serial"
+              ? batchNumber || null
+              : null,
+          serialNumber: partMode === "serial" ? serialNumber || null : null,
           note: note || null,
         });
         setSuccess("Inleverans bokförd.");
@@ -76,6 +100,10 @@ export function MovementClient({ orgSlug, parts, locations }: Props) {
           fromLocationId,
           quantity: qty,
           type: issueType,
+          batchId:
+            partMode === "batch" || partMode === "serial"
+              ? batchId || null
+              : null,
           note: note || null,
         });
         setSuccess(
@@ -87,12 +115,19 @@ export function MovementClient({ orgSlug, parts, locations }: Props) {
           fromLocationId,
           toLocationId,
           quantity: qty,
+          batchId:
+            partMode === "batch" || partMode === "serial"
+              ? batchId || null
+              : null,
           note: note || null,
         });
         setSuccess("Flytt bokförd.");
       }
       setQuantity("1");
       setNote("");
+      setBatchNumber("");
+      setSerialNumber("");
+      setBatchId("");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Kunde inte bokföra");
@@ -132,7 +167,12 @@ export function MovementClient({ orgSlug, parts, locations }: Props) {
             id="mv-part"
             required
             value={partId}
-            onChange={(e) => setPartId(e.target.value)}
+            onChange={(e) => {
+              setPartId(e.target.value);
+              setBatchId("");
+              setBatchNumber("");
+              setSerialNumber("");
+            }}
             disabled={parts.length === 0}
           >
             {parts.length === 0 ? (
@@ -232,6 +272,52 @@ export function MovementClient({ orgSlug, parts, locations }: Props) {
             <div />
           )}
         </div>
+
+        {mode === "receipt" &&
+        (partMode === "batch" || partMode === "serial") ? (
+          <div className="space-y-2">
+            <Label htmlFor="mv-batch-number">Batchnummer</Label>
+            <Input
+              id="mv-batch-number"
+              value={batchNumber}
+              onChange={(e) => setBatchNumber(e.target.value)}
+              className="font-mono"
+              placeholder="B-2026-001"
+            />
+          </div>
+        ) : null}
+
+        {mode === "receipt" && partMode === "serial" ? (
+          <div className="space-y-2">
+            <Label htmlFor="mv-serial-number">Serienummer</Label>
+            <Input
+              id="mv-serial-number"
+              value={serialNumber}
+              onChange={(e) => setSerialNumber(e.target.value)}
+              className="font-mono"
+              placeholder="SN-001"
+            />
+          </div>
+        ) : null}
+
+        {mode !== "receipt" &&
+        (partMode === "batch" || partMode === "serial") ? (
+          <div className="space-y-2">
+            <Label htmlFor="mv-batch-id">Batch (valfritt)</Label>
+            <Select
+              id="mv-batch-id"
+              value={batchId}
+              onChange={(e) => setBatchId(e.target.value)}
+            >
+              <option value="">Ingen</option>
+              {partBatches.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.batchNumber}
+                </option>
+              ))}
+            </Select>
+          </div>
+        ) : null}
 
         <div className="space-y-2">
           <Label htmlFor="mv-note">Notering</Label>

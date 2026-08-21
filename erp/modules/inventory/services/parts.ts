@@ -45,6 +45,7 @@ export async function listParts(organizationId: string, filter: PartListFilter) 
         standardCost: part.standardCost,
         salesPrice: part.salesPrice,
         leadTimeDays: part.leadTimeDays,
+        traceabilityMode: part.traceabilityMode,
         updatedAt: part.updatedAt,
       })
       .from(part)

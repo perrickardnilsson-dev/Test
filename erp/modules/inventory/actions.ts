@@ -9,6 +9,8 @@ import {
   updatePartSchema,
 } from "./domain/part-schemas";
 import {
+  createBatchSchema,
+  createSerialUnitSchema,
   createStockLocationSchema,
   createWarehouseSchema,
   manualIssueSchema,
@@ -45,6 +47,17 @@ import {
   listStockTransactions,
   postStockTransaction,
 } from "./services/stock";
+import {
+  createBatch,
+  createSerialUnit,
+  listBatches,
+} from "./services/traceability";
+import {
+  findBatchByNumber,
+  findSerialByNumber,
+  traceGenealogy,
+} from "./services/genealogy";
+import { seedRecallDemo } from "./services/recall-demo";
 import { requireOrgAccess } from "./lib/org-context";
 import { StockPostingError } from "./domain/stock-posting";
 
@@ -260,4 +273,84 @@ export async function postManualTransferAction(orgSlug: string, raw: unknown) {
     }
     throw err;
   }
+}
+
+function revalidateTraceability(orgSlug: string) {
+  revalidatePath(`/${orgSlug}/batcher`);
+  revalidatePath(`/${orgSlug}/individer`);
+  revalidatePath(`/${orgSlug}/sparbarhet`);
+  revalidateStock(orgSlug);
+}
+
+export async function listBatchesAction(
+  orgSlug: string,
+  opts?: { partId?: string | null; search?: string },
+) {
+  const ctx = await requireOrgAccess(orgSlug);
+  return listBatches(ctx.organizationId, opts);
+}
+
+export async function createBatchAction(orgSlug: string, raw: unknown) {
+  const ctx = await requireOrgAccess(orgSlug);
+  const input = createBatchSchema.parse(raw);
+  const created = await createBatch(ctx.organizationId, ctx.userId, input);
+  revalidateTraceability(orgSlug);
+  return { id: created.id, batchNumber: created.batchNumber };
+}
+
+export async function createSerialUnitAction(orgSlug: string, raw: unknown) {
+  const ctx = await requireOrgAccess(orgSlug);
+  const input = createSerialUnitSchema.parse(raw);
+  const created = await createSerialUnit(
+    ctx.organizationId,
+    ctx.userId,
+    input,
+  );
+  revalidateTraceability(orgSlug);
+  return { id: created.id, serialNumber: created.serialNumber };
+}
+
+export async function traceGenealogyAction(
+  orgSlug: string,
+  raw: {
+    batchNumber?: string;
+    serialNumber?: string;
+    direction: "backward" | "forward";
+  },
+) {
+  const ctx = await requireOrgAccess(orgSlug);
+  const batchNumber = raw.batchNumber?.trim() || undefined;
+  const serialNumber = raw.serialNumber?.trim() || undefined;
+
+  let batchId: string | null = null;
+  let serialUnitId: string | null = null;
+
+  if (batchNumber) {
+    const found = await findBatchByNumber(ctx.organizationId, batchNumber);
+    if (!found) {
+      throw new Error(`Batch ${batchNumber} hittades inte`);
+    }
+    batchId = found.id;
+  } else if (serialNumber) {
+    const found = await findSerialByNumber(ctx.organizationId, serialNumber);
+    if (!found) {
+      throw new Error(`Serienummer ${serialNumber} hittades inte`);
+    }
+    serialUnitId = found.id;
+  } else {
+    throw new Error("Ange batchnummer eller serienummer");
+  }
+
+  return traceGenealogy(ctx.organizationId, {
+    batchId,
+    serialUnitId,
+    direction: raw.direction,
+  });
+}
+
+export async function seedRecallDemoAction(orgSlug: string) {
+  const ctx = await requireOrgAccess(orgSlug);
+  const result = await seedRecallDemo(ctx.organizationId, ctx.userId);
+  revalidateTraceability(orgSlug);
+  return result;
 }

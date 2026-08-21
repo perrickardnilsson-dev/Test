@@ -1,7 +1,9 @@
-import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { getTenantDb, type Db } from "@/core/db/tenant";
 import {
+  batch,
   part,
+  serialUnit,
   stockBalance,
   stockLocation,
   stockTransaction,
@@ -12,6 +14,10 @@ import {
   StockPostingError,
   type StockBalanceState,
 } from "../domain/stock-posting";
+import {
+  assertTraceabilityRequirement,
+  TraceabilityError,
+} from "../domain/genealogy";
 import type {
   ManualIssueInput,
   ManualReceiptInput,
@@ -42,17 +48,22 @@ async function loadBalance(
   organizationId: string,
   partId: string,
   locationId: string,
+  batchId: string | null,
 ) {
+  const conditions = [
+    eq(stockBalance.organizationId, organizationId),
+    eq(stockBalance.partId, partId),
+    eq(stockBalance.locationId, locationId),
+  ];
+  if (batchId) {
+    conditions.push(eq(stockBalance.batchId, batchId));
+  } else {
+    conditions.push(isNull(stockBalance.batchId));
+  }
   const rows = await tx
     .select()
     .from(stockBalance)
-    .where(
-      and(
-        eq(stockBalance.organizationId, organizationId),
-        eq(stockBalance.partId, partId),
-        eq(stockBalance.locationId, locationId),
-      ),
-    )
+    .where(and(...conditions))
     .limit(1);
   return rows[0] ?? null;
 }
@@ -87,6 +98,7 @@ async function upsertBalance(
   organizationId: string,
   partId: string,
   locationId: string,
+  batchId: string | null,
   existingId: string | undefined,
   next: StockBalanceState,
 ) {
@@ -106,10 +118,107 @@ async function upsertBalance(
     organizationId,
     partId,
     locationId,
+    batchId,
     quantity: num(next.quantity),
     reservedQuantity: num(next.reservedQuantity),
     averageCost: num(next.averageCost),
   });
+}
+
+async function resolveReceiptTrace(
+  tx: Db,
+  organizationId: string,
+  userId: string,
+  partId: string,
+  mode: "none" | "batch" | "serial",
+  input: ManualReceiptInput,
+): Promise<{ batchId: string | null; serialUnitId: string | null }> {
+  let batchId = input.batchId ?? null;
+  let serialUnitId: string | null = null;
+
+  if (mode === "batch" || mode === "serial") {
+    if (!batchId && input.batchNumber) {
+      const existing = await tx
+        .select({ id: batch.id })
+        .from(batch)
+        .where(
+          and(
+            eq(batch.organizationId, organizationId),
+            eq(batch.partId, partId),
+            eq(batch.batchNumber, input.batchNumber),
+          ),
+        )
+        .limit(1);
+      if (existing[0]) {
+        batchId = existing[0].id;
+      } else {
+        const [created] = await tx
+          .insert(batch)
+          .values({
+            organizationId,
+            partId,
+            batchNumber: input.batchNumber,
+            createdBy: userId,
+          })
+          .returning({ id: batch.id });
+        batchId = created!.id;
+      }
+    }
+  }
+
+  if (mode === "serial") {
+    if (!input.serialNumber) {
+      throw new TraceabilityError("Serienummer krävs för denna artikel");
+    }
+    if (input.quantity !== 1) {
+      throw new TraceabilityError(
+        "Serieartikel måste bokföras med antal 1 per serienummer",
+      );
+    }
+    const existingSerial = await tx
+      .select({ id: serialUnit.id })
+      .from(serialUnit)
+      .where(
+        and(
+          eq(serialUnit.organizationId, organizationId),
+          eq(serialUnit.partId, partId),
+          eq(serialUnit.serialNumber, input.serialNumber),
+        ),
+      )
+      .limit(1);
+    if (existingSerial[0]) {
+      throw new TraceabilityError(
+        `Serienummer ${input.serialNumber} finns redan`,
+      );
+    }
+    const [created] = await tx
+      .insert(serialUnit)
+      .values({
+        organizationId,
+        partId,
+        serialNumber: input.serialNumber,
+        batchId,
+        currentLocationId: input.toLocationId,
+        createdBy: userId,
+      })
+      .returning({ id: serialUnit.id });
+    serialUnitId = created!.id;
+  }
+
+  try {
+    assertTraceabilityRequirement(mode, {
+      batchId,
+      serialUnitId,
+      quantity: input.quantity,
+    });
+  } catch (err) {
+    if (err instanceof TraceabilityError) {
+      throw new StockPostingError(err.message);
+    }
+    throw err;
+  }
+
+  return { batchId, serialUnitId };
 }
 
 type PostMeta = {
@@ -118,6 +227,7 @@ type PostMeta = {
   partId: string;
   note?: string | null;
   referenceId?: string | null;
+  traceabilityMode: "none" | "batch" | "serial";
 };
 
 /**
@@ -130,7 +240,7 @@ export async function postStockTransaction(
 ) {
   return getTenantDb(organizationId, async (tx) => {
     const partRows = await tx
-      .select({ id: part.id })
+      .select({ id: part.id, traceabilityMode: part.traceabilityMode })
       .from(part)
       .where(
         and(eq(part.organizationId, organizationId), eq(part.id, input.partId)),
@@ -145,10 +255,10 @@ export async function postStockTransaction(
       userId,
       partId: input.partId,
       note: input.note ?? null,
+      traceabilityMode: partRows[0].traceabilityMode,
     };
 
     if ("toLocationId" in input && !("fromLocationId" in input)) {
-      // receipt
       return postReceipt(tx, meta, input as ManualReceiptInput);
     }
     if ("fromLocationId" in input && "toLocationId" in input) {
@@ -172,11 +282,21 @@ async function postReceipt(
     throw new StockPostingError("Lagerplatsen är ogiltig eller inaktiv");
   }
 
+  const { batchId, serialUnitId } = await resolveReceiptTrace(
+    tx,
+    meta.organizationId,
+    meta.userId,
+    meta.partId,
+    meta.traceabilityMode,
+    input,
+  );
+
   const existing = await loadBalance(
     tx,
     meta.organizationId,
     input.partId,
     input.toLocationId,
+    batchId,
   );
   const plan = planStockPosting({
     type: "receipt",
@@ -196,6 +316,8 @@ async function postReceipt(
       quantity: num(plan.quantity),
       fromLocationId: null,
       toLocationId: plan.toLocationId,
+      batchId,
+      serialUnitId,
       unitCost: num(plan.unitCost),
       referenceType: "manual",
       postedBy: meta.userId,
@@ -208,6 +330,7 @@ async function postReceipt(
     meta.organizationId,
     meta.partId,
     input.toLocationId,
+    batchId,
     existing?.id,
     plan.toBalance!,
   );
@@ -225,11 +348,27 @@ async function postIssue(tx: Db, meta: PostMeta, input: ManualIssueInput) {
     throw new StockPostingError("Lagerplatsen är ogiltig eller inaktiv");
   }
 
+  const batchId = input.batchId ?? null;
+  const serialUnitId = input.serialUnitId ?? null;
+  try {
+    assertTraceabilityRequirement(meta.traceabilityMode, {
+      batchId,
+      serialUnitId,
+      quantity: input.quantity,
+    });
+  } catch (err) {
+    if (err instanceof TraceabilityError) {
+      throw new StockPostingError(err.message);
+    }
+    throw err;
+  }
+
   const existing = await loadBalance(
     tx,
     meta.organizationId,
     input.partId,
     input.fromLocationId,
+    batchId,
   );
   const plan = planStockPosting({
     type: input.type,
@@ -248,6 +387,8 @@ async function postIssue(tx: Db, meta: PostMeta, input: ManualIssueInput) {
       quantity: num(plan.quantity),
       fromLocationId: plan.fromLocationId,
       toLocationId: null,
+      batchId,
+      serialUnitId,
       unitCost: num(plan.unitCost),
       referenceType: "manual",
       postedBy: meta.userId,
@@ -260,9 +401,21 @@ async function postIssue(tx: Db, meta: PostMeta, input: ManualIssueInput) {
     meta.organizationId,
     meta.partId,
     input.fromLocationId,
+    batchId,
     existing?.id,
     plan.fromBalance!,
   );
+
+  if (serialUnitId) {
+    await tx
+      .update(serialUnit)
+      .set({
+        status: input.type === "scrap" ? "consumed" : "shipped",
+        currentLocationId: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(serialUnit.id, serialUnitId));
+  }
 
   return { transactionId: txRow!.id };
 }
@@ -289,17 +442,34 @@ async function postTransfer(
     throw new StockPostingError("Till-platsen är ogiltig eller inaktiv");
   }
 
+  const batchId = input.batchId ?? null;
+  const serialUnitId = input.serialUnitId ?? null;
+  try {
+    assertTraceabilityRequirement(meta.traceabilityMode, {
+      batchId,
+      serialUnitId,
+      quantity: input.quantity,
+    });
+  } catch (err) {
+    if (err instanceof TraceabilityError) {
+      throw new StockPostingError(err.message);
+    }
+    throw err;
+  }
+
   const existingFrom = await loadBalance(
     tx,
     meta.organizationId,
     input.partId,
     input.fromLocationId,
+    batchId,
   );
   const existingTo = await loadBalance(
     tx,
     meta.organizationId,
     input.partId,
     input.toLocationId,
+    batchId,
   );
 
   const plan = planStockPosting({
@@ -321,6 +491,8 @@ async function postTransfer(
       quantity: num(plan.quantity),
       fromLocationId: plan.fromLocationId,
       toLocationId: plan.toLocationId,
+      batchId,
+      serialUnitId,
       unitCost: num(plan.unitCost),
       referenceType: "manual",
       postedBy: meta.userId,
@@ -333,6 +505,7 @@ async function postTransfer(
     meta.organizationId,
     meta.partId,
     input.fromLocationId,
+    batchId,
     existingFrom?.id,
     plan.fromBalance!,
   );
@@ -341,9 +514,20 @@ async function postTransfer(
     meta.organizationId,
     meta.partId,
     input.toLocationId,
+    batchId,
     existingTo?.id,
     plan.toBalance!,
   );
+
+  if (serialUnitId) {
+    await tx
+      .update(serialUnit)
+      .set({
+        currentLocationId: input.toLocationId,
+        updatedAt: new Date(),
+      })
+      .where(eq(serialUnit.id, serialUnitId));
+  }
 
   return { transactionId: txRow!.id };
 }

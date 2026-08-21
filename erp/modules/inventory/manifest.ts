@@ -46,6 +46,21 @@ export const inventoryManifest: ModuleManifest = {
       label: "Transaktioner",
       href: "lager/historik",
     },
+    {
+      id: "inventory.batches",
+      label: "Batcher",
+      href: "batcher",
+    },
+    {
+      id: "inventory.serials",
+      label: "Individer",
+      href: "individer",
+    },
+    {
+      id: "inventory.traceability",
+      label: "Spårbarhet",
+      href: "sparbarhet",
+    },
   ],
   permissions: [
     {
