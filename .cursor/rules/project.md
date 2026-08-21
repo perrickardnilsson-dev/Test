@@ -1,5 +1,7 @@
 # Cursor-prompt: Modulär ERP-plattform för tillverkande företag
 
+> **Monorepo-layout:** NO-lärarplattformen lever i repots rot. ERP-prototypen lever i `/erp` (egen Next.js-app med `/erp/app`, `/erp/core`, `/erp/modules`). Alla sökvägar nedan är relativa till `/erp` om inget annat anges. Lärarplattformen ska behållas parallellt — ersätt den inte.
+
 > Klistra in hela detta dokument som din första prompt i Cursor (eller spara som `.cursor/rules/project.md` så att den alltid är i kontext). Kör sedan fas för fas.
 
 ---
@@ -86,26 +88,29 @@ Kör allt i en **modulär monolit**. Inga mikrotjänster. Ingen event-buss över
 
 ### 4.1 Katalogstruktur
 
+ERP-appen ligger under `/erp` i monorepot (NO-lärarplattformen äger roten):
+
 ```
-/app                      Next.js routes (tunna — bara komposition)
-  /(auth)                 inloggning, registrering
-  /(app)/[orgSlug]/...    allt bakom inloggning, tenant i URL
-/core                     plattformen — modulerna beror på denna, aldrig tvärtom
-  /db                     schema, migrations, tenant-scopad klient
-  /auth                   session, roller, behörighet
-  /module-registry        modulregistret (se nedan)
-  /numbering              nummerserier (artikelnr, ordernr...)
-  /audit                  händelselogg
-  /events                 in-process event-buss
-  /ui                     designsystem, layout, tabell, kommandopalett
-/modules
-  /inventory              LAGER & ARTIKLAR — bygg denna på djupet
-  /purchasing             stubbe (nav + tomma vyer)
-  /sales                  stubbe
-  /manufacturing          stubbe
-  /timekeeping            stubbe
-  /accounting             stubbe
-/tests
+/erp
+  /app                      Next.js routes (tunna — bara komposition)
+    /(auth)                 inloggning, registrering
+    /(app)/[orgSlug]/...    allt bakom inloggning, tenant i URL
+  /core                     plattformen — modulerna beror på denna, aldrig tvärtom
+    /db                     schema, migrations, tenant-scopad klient
+    /auth                   session, roller, behörighet
+    /module-registry        modulregistret (se nedan)
+    /numbering              nummerserier (artikelnr, ordernr...)
+    /audit                  händelselogg
+    /events                 in-process event-buss
+    /ui                     designsystem, layout, tabell, kommandopalett
+  /modules
+    /inventory              LAGER & ARTIKLAR — bygg denna på djupet
+    /purchasing             stubbe (nav + tomma vyer)
+    /sales                  stubbe
+    /manufacturing          stubbe
+    /timekeeping            stubbe
+    /accounting             stubbe
+  /tests
 ```
 
 ### 4.2 Modulkontrakt

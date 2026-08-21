@@ -2,14 +2,15 @@
 
 ## Översikt
 
-Modulär monolit för ett nordiskt tillverknings-ERP. En Next.js-process, en
+Modulär monolit för ett nordiskt tillverknings-ERP. Bor i `/erp` i monorepot
+(NO-lärarplattformen lever parallellt i roten). En Next.js-process, en
 PostgreSQL-databas, ingen event-buss över nätverk.
 
 ```
-/app          Tunna routes — bara komposition
-/core         Plattform (db, auth, modulregister, events, ui)
-/modules      Affärsmoduler (inventory byggs på djupet; övriga stubbar)
-/tests        Tvärgående tester (t.ex. tenant-isolering)
+/erp/app          Tunna routes — bara komposition
+/erp/core         Plattform (db, auth, modulregister, events, ui)
+/erp/modules      Affärsmoduler (inventory byggs på djupet; övriga stubbar)
+/erp/tests        Tvärgående tester (t.ex. tenant-isolering)
 ```
 
 ## Modulregister

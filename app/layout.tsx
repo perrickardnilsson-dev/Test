@@ -1,23 +1,14 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "@/components/ui/toaster";
 
-const sans = IBM_Plex_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-sans",
-});
-
-const mono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  variable: "--font-mono",
-});
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Nordisk tillverknings-ERP",
+  title: "NO-provplattform",
   description:
-    "Molnbaserat affärssystem för små och medelstora tillverkande företag i Norden.",
+    "Plattform för NO-lärare på högstadiet: generera prov från nationella prov, låt elever göra dem digitalt och rätta med AI-stöd.",
 };
 
 export default function RootLayout({
@@ -27,8 +18,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="sv">
-      <body className={`${sans.variable} ${mono.variable} font-sans`}>
+      <body className={inter.className}>
         {children}
+        <Toaster />
       </body>
     </html>
   );
