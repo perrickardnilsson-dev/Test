@@ -92,6 +92,25 @@ import {
   seedMrpDemo,
   updateSuggestionStatuses,
 } from "./services/mrp";
+import {
+  createInventoryCountSchema,
+  inventoryCountIdSchema,
+  recordCountByPartSchema,
+  recordCountLineSchema,
+} from "./domain/inventory-count-schemas";
+import { InventoryCountError } from "./domain/inventory-count";
+import {
+  approveAndPostInventoryCount,
+  cancelInventoryCount,
+  createInventoryCount,
+  getInventoryCount,
+  listInventoryCounts,
+  recordCountByPartNumber,
+  recordCountLine,
+  submitInventoryCount,
+} from "./services/inventory-count";
+import { seedPitchDemo } from "./services/pitch-seed";
+import { getPitchDashboard } from "./services/dashboard";
 
 function revalidatePlanning(orgSlug: string) {
   revalidatePath(`/${orgSlug}/strukturer`);
@@ -543,4 +562,161 @@ export async function seedMrpDemoAction(orgSlug: string) {
   revalidatePlanning(orgSlug);
   revalidatePath(`/${orgSlug}/artiklar`);
   return result;
+}
+
+// --- Fas 6–8: inventering, mobilt, pitch ---
+
+function revalidateInventering(orgSlug: string, countId?: string) {
+  revalidatePath(`/${orgSlug}/inventering`);
+  revalidatePath(`/${orgSlug}/mobilt`);
+  revalidatePath(`/${orgSlug}`);
+  if (countId) {
+    revalidatePath(`/${orgSlug}/inventering/${countId}`);
+    revalidatePath(`/${orgSlug}/inventering/${countId}/mobil`);
+  }
+}
+
+export async function listInventoryCountsAction(orgSlug: string) {
+  const ctx = await requireOrgAccess(orgSlug);
+  return listInventoryCounts(ctx.organizationId);
+}
+
+export async function getInventoryCountAction(
+  orgSlug: string,
+  countId: string,
+) {
+  const ctx = await requireOrgAccess(orgSlug);
+  return getInventoryCount(ctx.organizationId, countId);
+}
+
+export async function createInventoryCountAction(
+  orgSlug: string,
+  raw: unknown,
+) {
+  const ctx = await requireOrgAccess(orgSlug);
+  try {
+    const input = createInventoryCountSchema.parse(raw);
+    const created = await createInventoryCount(
+      ctx.organizationId,
+      ctx.userId,
+      input,
+    );
+    revalidateInventering(orgSlug, created.id);
+    return created;
+  } catch (err) {
+    if (err instanceof InventoryCountError) throw new Error(err.message);
+    throw err;
+  }
+}
+
+export async function recordCountLineAction(orgSlug: string, raw: unknown) {
+  const ctx = await requireOrgAccess(orgSlug);
+  try {
+    const input = recordCountLineSchema.parse(raw);
+    const result = await recordCountLine(
+      ctx.organizationId,
+      ctx.userId,
+      input,
+    );
+    revalidateInventering(orgSlug);
+    return result;
+  } catch (err) {
+    if (err instanceof InventoryCountError) throw new Error(err.message);
+    throw err;
+  }
+}
+
+export async function recordCountByPartAction(orgSlug: string, raw: unknown) {
+  const ctx = await requireOrgAccess(orgSlug);
+  try {
+    const input = recordCountByPartSchema.parse(raw);
+    const result = await recordCountByPartNumber(
+      ctx.organizationId,
+      ctx.userId,
+      input,
+    );
+    revalidateInventering(orgSlug, input.inventoryCountId);
+    return result;
+  } catch (err) {
+    if (err instanceof InventoryCountError) throw new Error(err.message);
+    throw err;
+  }
+}
+
+export async function submitInventoryCountAction(
+  orgSlug: string,
+  raw: unknown,
+) {
+  const ctx = await requireOrgAccess(orgSlug);
+  try {
+    const { inventoryCountId } = inventoryCountIdSchema.parse(raw);
+    const result = await submitInventoryCount(
+      ctx.organizationId,
+      ctx.userId,
+      inventoryCountId,
+    );
+    revalidateInventering(orgSlug, inventoryCountId);
+    return result;
+  } catch (err) {
+    if (err instanceof InventoryCountError) throw new Error(err.message);
+    throw err;
+  }
+}
+
+export async function approveAndPostInventoryCountAction(
+  orgSlug: string,
+  raw: unknown,
+) {
+  const ctx = await requireOrgAccess(orgSlug);
+  try {
+    const { inventoryCountId } = inventoryCountIdSchema.parse(raw);
+    const result = await approveAndPostInventoryCount(
+      ctx.organizationId,
+      ctx.userId,
+      inventoryCountId,
+    );
+    revalidateInventering(orgSlug, inventoryCountId);
+    revalidatePath(`/${orgSlug}/lager`);
+    revalidatePath(`/${orgSlug}/lager/historik`);
+    return result;
+  } catch (err) {
+    if (err instanceof InventoryCountError) throw new Error(err.message);
+    throw err;
+  }
+}
+
+export async function cancelInventoryCountAction(
+  orgSlug: string,
+  raw: unknown,
+) {
+  const ctx = await requireOrgAccess(orgSlug);
+  try {
+    const { inventoryCountId } = inventoryCountIdSchema.parse(raw);
+    const result = await cancelInventoryCount(
+      ctx.organizationId,
+      ctx.userId,
+      inventoryCountId,
+    );
+    revalidateInventering(orgSlug, inventoryCountId);
+    return result;
+  } catch (err) {
+    if (err instanceof InventoryCountError) throw new Error(err.message);
+    throw err;
+  }
+}
+
+export async function seedPitchDemoAction(orgSlug: string) {
+  const ctx = await requireOrgAccess(orgSlug);
+  const result = await seedPitchDemo(ctx.organizationId, ctx.userId);
+  revalidateInventering(orgSlug);
+  revalidatePlanning(orgSlug);
+  revalidatePath(`/${orgSlug}/artiklar`);
+  revalidatePath(`/${orgSlug}/lager`);
+  revalidatePath(`/${orgSlug}/strukturer`);
+  return result;
+}
+
+export async function getPitchDashboardAction(orgSlug: string) {
+  const ctx = await requireOrgAccess(orgSlug);
+  return getPitchDashboard(ctx.organizationId);
 }

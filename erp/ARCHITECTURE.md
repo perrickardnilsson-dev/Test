@@ -87,6 +87,29 @@ Domänlogik i `modules/inventory/domain/genealogy.ts` (Vitest).
 
 Domänlogik i `modules/inventory/domain/bom.ts` och `mrp.ts` (Vitest, ≥15 fall).
 
+## Inventering (Fas 6)
+
+- `inventory_count` / `inventory_count_line` med statusflöde
+  draft → counting → pending_approval → posted (eller cancelled)
+- Snapshot från `stockBalance` vid skapande
+- Avvikelse = räknat − förväntat; värde = avvikelse × enhetskostnad
+- Godkännande bokför `type: "count"` via `planStockPosting` + saldo-upsert
+- UI: inventeringslista, detalj, mobil räkning
+
+Domänlogik i `modules/inventory/domain/inventory-count.ts` (Vitest).
+
+## Mobilt lager (Fas 7)
+
+- Touch-vänlig inleverans / utleverans / inventeringsräkning
+- Streckkod: `window.BarcodeDetector` eller `@zxing/browser`
+- Manuell artikelnummerinmatning alltid tillgänglig
+
+## Pitch-dashboard (Fas 8)
+
+- `seedPitchDemo` — kompakt men imponerande demodata (artiklar, BOM, saldo, behov)
+- `getPitchDashboard` — brist, kommande behov, lagervärde, död lager
+- Org-startsida visar KPI:er + seed-knapp
+
 ## Faser
 
 Se `.cursor/rules/project.md` för fasordning (0–8). Detta dokument uppdateras

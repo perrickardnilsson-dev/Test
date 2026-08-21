@@ -634,6 +634,86 @@ export const stockTransaction = pgTable(
   ],
 );
 
+export const inventoryCountStatusEnum = pgEnum("inventory_count_status", [
+  "draft",
+  "counting",
+  "pending_approval",
+  "posted",
+  "cancelled",
+]);
+
+/**
+ * Inventeringshuvud — låst räkning tills godkänd och bokförd.
+ */
+export const inventoryCount = pgTable(
+  "inventory_count",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    warehouseId: uuid("warehouse_id"),
+    name: text("name").notNull(),
+    status: inventoryCountStatusEnum("status").notNull().default("draft"),
+    countedAt: timestamp("counted_at", { withTimezone: true }),
+    approvedAt: timestamp("approved_at", { withTimezone: true }),
+    approvedBy: text("approved_by"),
+    postedAt: timestamp("posted_at", { withTimezone: true }),
+    postedBy: text("posted_by"),
+    note: text("note"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdBy: text("created_by"),
+  },
+  (t) => [
+    index("inventory_count_org_idx").on(t.organizationId),
+    index("inventory_count_status_idx").on(t.status),
+  ],
+);
+
+/**
+ * Inventeringsrad — förväntat vs räknat, med avvikelsevärde.
+ */
+export const inventoryCountLine = pgTable(
+  "inventory_count_line",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    inventoryCountId: uuid("inventory_count_id").notNull(),
+    partId: uuid("part_id").notNull(),
+    locationId: uuid("location_id").notNull(),
+    batchId: uuid("batch_id"),
+    expectedQuantity: numeric("expected_quantity", { precision: 18, scale: 4 })
+      .notNull()
+      .default("0"),
+    countedQuantity: numeric("counted_quantity", { precision: 18, scale: 4 }),
+    unitCost: numeric("unit_cost", { precision: 18, scale: 4 })
+      .notNull()
+      .default("0"),
+    varianceValue: numeric("variance_value", { precision: 18, scale: 4 }),
+    countedBy: text("counted_by"),
+    countedAt: timestamp("counted_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("inventory_count_line_unique_uidx").on(
+      t.inventoryCountId,
+      t.partId,
+      t.locationId,
+      sql`coalesce(${t.batchId}, '00000000-0000-0000-0000-000000000000'::uuid)`,
+    ),
+    index("inventory_count_line_count_idx").on(t.inventoryCountId),
+    index("inventory_count_line_part_idx").on(t.partId),
+  ],
+);
+
 export const inventorySchema = {
   partGroup,
   part,
@@ -651,4 +731,6 @@ export const inventorySchema = {
   supplyLine,
   netRequirementRun,
   planningSuggestion,
+  inventoryCount,
+  inventoryCountLine,
 };

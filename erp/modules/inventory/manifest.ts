@@ -71,6 +71,16 @@ export const inventoryManifest: ModuleManifest = {
       label: "Planering",
       href: "planering",
     },
+    {
+      id: "inventory.counts",
+      label: "Inventering",
+      href: "inventering",
+    },
+    {
+      id: "inventory.mobile",
+      label: "Mobilt",
+      href: "mobilt",
+    },
   ],
   permissions: [
     {
@@ -100,6 +110,22 @@ export const inventoryManifest: ModuleManifest = {
     {
       id: "inventory.planning.run",
       label: "Köra nettobehov",
+    },
+    {
+      id: "inventory.count.read",
+      label: "Läsa inventering",
+    },
+    {
+      id: "inventory.count.write",
+      label: "Genomföra inventering",
+    },
+    {
+      id: "inventory.count.approve",
+      label: "Godkänna inventering",
+    },
+    {
+      id: "inventory.mobile.use",
+      label: "Använda mobilt lager",
     },
   ],
   schema: inventorySchema,
