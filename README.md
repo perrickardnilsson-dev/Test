@@ -1,5 +1,9 @@
 # NO-provplattform för högstadiet
 
+> **Monorepo:** Denna lärarplattform lever i repots rot. Den parallella
+> ERP-prototypen ligger i [`/erp`](./erp) — se [`MONOREPO.md`](./MONOREPO.md).
+> Ersätt inte den ena med den andra.
+
 En webbplattform för NO-lärare (biologi, fysik, kemi, teknik) på högstadiet i
 Sverige. Läraren tolkar gamla **frisläppta** nationella prov med AI, bygger
 frågebank, genererar prov (bank + AI-mix), publicerar till klasser, och rättar

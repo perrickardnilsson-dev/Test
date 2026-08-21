@@ -1,0 +1,37 @@
+{
+  "root": true,
+  "extends": ["next/core-web-vitals"],
+  "overrides": [
+    {
+      "files": ["modules/**/*.{ts,tsx,js,jsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "@/core/db/client",
+                "message": "Importera inte den råa db-klienten i modules. Använd getTenantDb(orgId) från '@/core/db/tenant'."
+              },
+              {
+                "name": "@/core/db/raw",
+                "message": "Importera inte den råa db-klienten i modules. Använd getTenantDb(orgId) från '@/core/db/tenant'."
+              },
+              {
+                "name": "@/core/db",
+                "importNames": ["db", "rawDb"],
+                "message": "Importera inte den råa db-klienten i modules. Använd getTenantDb(orgId) från '@/core/db/tenant'."
+              }
+            ],
+            "patterns": [
+              {
+                "group": ["**/core/db/client", "**/core/db/raw"],
+                "message": "Importera inte den råa db-klienten i modules. Använd getTenantDb(orgId) från '@/core/db/tenant'."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
