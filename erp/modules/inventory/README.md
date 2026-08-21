@@ -1,17 +1,31 @@
 # Lager & Artiklar
 
-Modulen som byggs på djupet. Datamodell och publikt kontrakt fylls i från Fas 2.
+Modulen som byggs på djupet.
 
-## Publikt kontrakt (planerat)
+## Publikt kontrakt (Fas 2)
 
-- Artikelregister (CRUD)
-- Lagerställen och lagerplatser
-- Transaktionsbokföring via `postStockTransaction`
-- Spårbarhet (batch/individ + genealogi)
-- Nettobehovskörning (MRP)
-- Inventering
+- `listParts` / `getPart` / `createPart` / `updatePart`
+- `listPartGroups` / `createPartGroup`
+- `listSavedPartViews` / `savePartView` / `deleteSavedPartView`
+- `createPartsBulk` + CSV-parser i `domain/csv.ts`
+- Server actions i `actions.ts` (anropas från UI)
 
 ## Schema
 
-Ägs av denna modul. Övriga moduler får inte importera tabellerna direkt —
-använd events eller publika service-funktioner.
+Ägs av denna modul (`schema.ts`):
+
+| Tabell | Syfte |
+|---|---|
+| `part` | Artikelregister |
+| `part_group` | Hierarkiska varugrupper |
+| `saved_part_view` | Sparade listvyer per användare |
+
+Övriga moduler får **inte** importera tabellerna direkt — använd events eller
+publika service-funktioner.
+
+## UI
+
+- `/{org}/artiklar` — listvy med sök, filter, sparade vyer, CSV-import
+- `/{org}/artiklar/ny` — skapa med progressiv avslöjning
+- `/{org}/artiklar/[id]` — redigera
+- `/{org}/varugrupper` — varugruppsregister
