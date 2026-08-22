@@ -29,6 +29,7 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/core/db/migrations ./core/db/migrations
 COPY --from=builder /app/scripts ./scripts
+COPY --from=builder /app/node_modules/postgres ./node_modules/postgres
 COPY --from=builder /app/package.json ./package.json
 
 USER nextjs

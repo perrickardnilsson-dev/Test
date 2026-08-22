@@ -2,10 +2,23 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import postgres from "postgres";
-import { postgresConnectionOptions } from "../core/db/postgres-options.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const migrationsDir = path.join(__dirname, "../core/db/migrations");
+
+function postgresConnectionOptions(connectionString) {
+  const local =
+    /localhost|127\.0\.0\.1/.test(connectionString) ||
+    connectionString.includes("railway.internal") ||
+    connectionString.includes("sslmode=disable");
+
+  return {
+    max: 1,
+    idle_timeout: 20,
+    connect_timeout: 15,
+    ssl: local ? false : "require",
+  };
+}
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) {
