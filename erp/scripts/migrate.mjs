@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import postgres from "postgres";
+import { postgresConnectionOptions } from "../core/db/postgres-options.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const migrationsDir = path.join(__dirname, "../core/db/migrations");
@@ -12,7 +13,26 @@ if (!databaseUrl) {
   process.exit(1);
 }
 
-const sql = postgres(databaseUrl, { max: 1 });
+const maxAttempts = 10;
+let sql;
+
+for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+  try {
+    sql = postgres(databaseUrl, postgresConnectionOptions(databaseUrl));
+    await sql`SELECT 1`;
+    console.log(`Database connected (attempt ${attempt}).`);
+    break;
+  } catch (error) {
+    console.error(
+      `Database connection failed (attempt ${attempt}/${maxAttempts}):`,
+      error instanceof Error ? error.message : error,
+    );
+    if (attempt === maxAttempts) {
+      process.exit(1);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+  }
+}
 
 try {
   await sql`
