@@ -19,6 +19,13 @@ export const auth = betterAuth({
   ],
   secret: process.env.BETTER_AUTH_SECRET ?? "dev-only-secret-change-me",
   baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3001",
+  // Allow phone/demo access via reverse tunnels (e.g. trycloudflare.com).
+  trustedOrigins: [
+    process.env.BETTER_AUTH_URL ?? "http://localhost:3001",
+    ...(process.env.BETTER_AUTH_TRUSTED_ORIGINS?.split(",").filter(Boolean) ??
+      []),
+  ],
+  trustedProxyHeaders: true,
 });
 
 export type Session = typeof auth.$Infer.Session;

@@ -6,7 +6,8 @@ se [`../MONOREPO.md`](../MONOREPO.md)).
 Modulär monolit med **Lager & Artiklar** byggt på djupet.
 
 Projektregler: [`../.cursor/rules/project.md`](../.cursor/rules/project.md)  
-Arkitektur: [`ARCHITECTURE.md`](./ARCHITECTURE.md)
+Arkitektur: [`ARCHITECTURE.md`](./ARCHITECTURE.md)  
+**Deploy (Railway/Fly, alltid på):** [`DEPLOY.md`](./DEPLOY.md)
 
 ## Stack
 

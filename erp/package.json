@@ -6,11 +6,13 @@
     "dev": "next dev -p 3001",
     "build": "next build",
     "start": "next start -p 3001",
+    "start:prod": "node scripts/start.mjs",
     "lint": "next lint",
     "test": "vitest run",
     "test:watch": "vitest",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:migrate:deploy": "node scripts/migrate.mjs",
     "db:studio": "drizzle-kit studio",
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down"
