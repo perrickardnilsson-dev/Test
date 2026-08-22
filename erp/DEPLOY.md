@@ -2,12 +2,40 @@
 
 This guide gets you a **stable HTTPS URL** that stays up without a Cursor agent or temporary Cloudflare tunnel.
 
-Supported targets:
+---
+
+## Already have NO-lärarplattformen on Vercel?
+
+**You do not need to change or remove that deployment.** This monorepo holds two separate apps:
+
+| App | Path | Where to host |
+|---|---|---|
+| NO-lärarplattform | repo root (`/`) | **Keep on Vercel** (as today) |
+| Tillverknings-ERP | `/erp` | **Railway or Fly.io** (recommended) |
+
+Same GitHub repo, **two different hosting projects** — they do not conflict.
+
+What usually goes wrong:
+
+| Symptom | Fix |
+|---|---|
+| Deploy builds the teacher app instead of ERP | Set **Root Directory** to `erp` (Railway Settings, or a second Vercel project) |
+| Vercel says the repo is already connected | **Add New Project** — do not overwrite the existing NO project |
+| ERP needs Postgres | Vercel has no Postgres; use Railway Postgres, Neon, or Fly Postgres |
+| Only one domain wanted | Use two subdomains, e.g. `no.example.com` (Vercel) + `erp.example.com` (Railway) |
+
+**Recommended:** leave NO on Vercel, deploy ERP to Railway (steps below). Takes ~10 minutes and gives ERP its own always-on URL.
+
+---
+
+Supported ERP targets:
 
 - **Railway** — easiest (app + Postgres in one project)
 - **Fly.io** — good if you already use Fly
 
 Both use the `Dockerfile` in this folder and run SQL migrations automatically on startup.
+
+**Optional:** a second Vercel project for ERP is possible with external Postgres (Neon), but Railway/Fly is simpler for this demo because of database + migrations on startup.
 
 ---
 

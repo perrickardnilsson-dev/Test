@@ -31,3 +31,12 @@ npm run dev      # http://localhost:3001
 ```
 
 **Viktigt:** ERP får inte ersätta lärarplattformen. Ändringar i `/erp` och i roten ska kunna samexistera.
+
+## Deploy (produktion)
+
+| App | Plattform | Root directory |
+|---|---|---|
+| NO-lärarplattform | Vercel (befintlig) | `/` (repo root) |
+| ERP pitch-demo | Railway eller Fly.io | `/erp` |
+
+Se [`erp/DEPLOY.md`](./erp/DEPLOY.md) — särskilt avsnittet *Already have NO on Vercel?*
