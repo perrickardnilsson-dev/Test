@@ -5,8 +5,8 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   const database = await checkDatabaseHealth();
-  const status = database.ok ? 200 : 503;
-
+  // Liveness: return 200 when the process is up (Railway/Fly healthchecks).
+  // Database status is still reported in the JSON body.
   return NextResponse.json(
     {
       status: database.ok ? "ok" : "degraded",
@@ -15,6 +15,6 @@ export async function GET() {
       phase: 1,
       timestamp: new Date().toISOString(),
     },
-    { status },
+    { status: 200 },
   );
 }
