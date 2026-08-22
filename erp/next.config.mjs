@@ -6,6 +6,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  output: "standalone",
   // Monorepo: undvik att Next.js tror att repots rot är app-roten
   outputFileTracingRoot: path.join(__dirname),
   eslint: {
