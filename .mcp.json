@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "rea": {
+      "type": "stdio",
+      "command": "rea",
+      "args": ["mcp"],
+      "env": {
+        "GHIDRA_INSTALL_DIR": "/opt/ghidra",
+        "JAVA_HOME": "/usr/lib/jvm/java-25-openjdk-amd64",
+        "LANG": "C.UTF-8"
+      }
+    }
+  }
+}
